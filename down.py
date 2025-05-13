@@ -63,14 +63,14 @@ def run(start_id, end_id, contest_id):
                 # title = title_tag.string.strip() if title_tag else '无标题'
                 # print(f"Submission ID: {submission_id}  -- Title: {title}")
                 table = soup.find(class_ = "table-responsive")
-                if (str(table).find('/contest/' + str(contest_id) + '/') == -1):
-                    continue
                 problem = table.find_all('td')[1].text
                 username = table.find('span', class_='uoj-username').text
                 score = table.find('a', class_='uoj-score').text
                 out_str = f'{problem}\n{username}\n{score}'
-                print(out_str, file = out_file)
                 cache_dict[str(submission_id)] = out_str
+                if (str(table).find('/contest/' + str(contest_id) + '/') == -1):
+                    continue
+                print(out_str, file = out_file)
                 # 根据页面结构进一步提取你需要的数据
                 # 比如查找提交结果所在的标签：
                 # result_div = soup.find('div', class_='result')
