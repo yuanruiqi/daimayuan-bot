@@ -24,7 +24,7 @@ min_id = 3932620
 
 def run(start_id, end_id, contest_id):
 
-    if (start_id < min_id):
+    if (start_id < min_id or end_id - start_id > 2025):
         return
     
     # 设置起始的 submission ID
