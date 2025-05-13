@@ -12,12 +12,7 @@ headers = {
 
 # 将你的登录 cookie 信息复制到下面
 cookies = {
-  "uoj_preferred_language": "C++",
-  "uoj_remember_token": "mDS03jtKJfCoPUnqfl33iJaY6EkniCpR4MFRxx1UKwpJDugh5Exr0MHd6Kwl",
-  "uoj_remember_token_checksum": "74634670b43e158cc40797194b6f5785",
-  "uoj_username": "wrkwrk",
-  "uoj_username_checksum": "45c62b8291abd741bd20010f283e39d7",
-  "UOJSESSID": "vsfn2609891aiuusnrqpsssta7"
+    'UOJSESSID': 'replace with your UOJSESSID'
 }
 
 min_id = 3932620
@@ -52,6 +47,8 @@ def run(start_id, end_id, contest_id):
         # print(url)
         try:
             response = requests.get(url, headers=headers, cookies=cookies, timeout=10)
+            assert(response.status_code == 200)
+            # print(response.status_code)
         except Exception as e:
             print(f"[错误] 请求 {url} 时出现异常: {e}")
             continue
