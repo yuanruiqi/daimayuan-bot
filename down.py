@@ -43,7 +43,10 @@ def run(start_id, end_id, contest_id):
 
     for submission_id in range(start_id, end_id + 1):
         if (cache_dict.get(str(submission_id)) != None):
-            print(cache_dict.get(str(submission_id)), file = out_file)
+            out_str, val = cache_dict.get(str(submission_id))
+            if (val != contest_id):
+                continue
+            print(out_str, file = out_file)
             continue
         url = f"{base_url}{submission_id}"
         # print(url)
@@ -62,13 +65,29 @@ def run(start_id, end_id, contest_id):
                 # title_tag = soup.find('title')
                 # title = title_tag.string.strip() if title_tag else '无标题'
                 # print(f"Submission ID: {submission_id}  -- Title: {title}")
-                table = soup.find(class_ = "table-responsive")
-                problem = table.find_all('td')[1].text
-                username = table.find('span', class_='uoj-username').text
-                score = table.find('a', class_='uoj-score').text
-                out_str = f'{problem}\n{username}\n{score}'
-                cache_dict[str(submission_id)] = out_str
-                if (str(table).find('/contest/' + str(contest_id) + '/') == -1):
+                try:
+                    table = soup.find(class_ = "table-responsive")
+                    problem = table.find_all('td')[1].text
+                    username = table.find('span', class_='uoj-username').text
+                    score = table.find('a', class_='uoj-score').text
+                    out_str = f'{problem}\n{username}\n{score}'
+                except:
+                    cache_dict[str(submission_id)] = ('CE', -1)
+                    continue
+                # print(table)
+                # cache_dict[str(submission_id)] = (out_str, )
+                table_str = str(table)
+                if (table_str.find('/contest/') == -1):
+                    cache_dict[str(submission_id)] = (out_str, -1)
+                    continue
+                'xxxxx/contest/int/yyyyy'
+                cur = table_str.find('/contest/') + 9
+                val = 0
+                while cur < len(table_str) and table_str[cur].isdigit():
+                    val = val * 10 + int(table_str[cur])
+                    cur += 1
+                cache_dict[str(submission_id)] = (out_str, val)
+                if (val != contest_id):
                     continue
                 print(out_str, file = out_file)
                 # 根据页面结构进一步提取你需要的数据
