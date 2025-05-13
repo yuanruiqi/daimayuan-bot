@@ -11,9 +11,15 @@ headers = {
 
 # 将你的登录 cookie 信息复制到下面
 cookies = {
-    'sessionid': 'your_session_value_here',
-    # 根据具体情况添加其他 cookie 信息，例如 'token': 'xxx'
+  "uoj_preferred_language": "C++",
+  "uoj_remember_token": "mDS03jtKJfCoPUnqfl33iJaY6EkniCpR4MFRxx1UKwpJDugh5Exr0MHd6Kwl",
+  "uoj_remember_token_checksum": "74634670b43e158cc40797194b6f5785",
+  "uoj_username": "wrkwrk",
+  "uoj_username_checksum": "45c62b8291abd741bd20010f283e39d7",
+  "UOJSESSID": "vsfn2609891aiuusnrqpsssta7"
 }
+
+
 
 # 设置起始的 submission ID
 start_id = 3932924
@@ -24,6 +30,7 @@ base_url = 'http://oj.daimayuan.top/submission/'
 
 for submission_id in range(start_id, end_id):
     url = f"{base_url}{submission_id}"
+    print(url)
     try:
         response = requests.get(url, headers=headers, cookies=cookies, timeout=10)
     except Exception as e:
@@ -33,11 +40,20 @@ for submission_id in range(start_id, end_id):
     if response.status_code == 200:
         # 使用 BeautifulSoup 解析返回的 HTML 内容
         soup = BeautifulSoup(response.text, 'html.parser')
-
+        # print(soup)
         # 举例：提取页面的标题
         title_tag = soup.find('title')
         title = title_tag.string.strip() if title_tag else '无标题'
         print(f"Submission ID: {submission_id}  -- Title: {title}")
+        # problem = soup.find('a', class_='uoj-username').text
+        # print(username)
+        table=soup.find(class_="table-responsive")
+        # print(table)
+        username = table.find('span', class_='uoj-username').text
+        print(username)
+        score = table.find('a', class_='uoj-score').text
+        print(score)
+
 
         # 根据页面结构进一步提取你需要的数据
         # 比如查找提交结果所在的标签：
