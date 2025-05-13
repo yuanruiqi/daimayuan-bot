@@ -24,17 +24,16 @@ int main()
         if (!id[a]) id[a] = ++cnt, name.emplace_back(a);
         m[b][id[a]] = max(m[b][id[a]], c);
     }
-    cout << "这里需要一个东西, ";
-    for (auto i : name) cout << i << ", ";
-    cout << '\n';
+    cout << "#, ";
+    for (int i=0;i<cnt;++i) cout << name[i] << (i == cnt - 1 ? "\n" : ", ");
     for (auto [s, p] : m)
     {
         cout << s << ", ";
         // int z = 0;
         // for (auto [x, y] : p) z += y;
         // cout << z;
-        for (int i=1;i<=cnt;++i) cout << p[i] << ", ";
-        cout << '\n';
+        for (int i=1;i<=cnt;++i) cout << p[i] << (i == cnt ? "\n" : ", ");
+        // cout << '\n';
     }
     return 0;
 }
