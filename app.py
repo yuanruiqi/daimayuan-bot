@@ -2,6 +2,7 @@
 
 from flask import Flask, request, render_template, render_template_string, redirect, url_for
 from run import run
+import os
 
 app = Flask(__name__)
 
@@ -12,11 +13,16 @@ def index():
             a = int(request.form["a"])
             b = int(request.form["b"])
             c = int(request.form["c"])
+            if os.path.exists('lock'):
+                return render_template("index.html", error = True)
+            with open('lock', 'w') as f:
+                f.write('working')
             run(a, b, c)  # 生成 out.html
+            os.remove('lock')
             return redirect(url_for("result"))
         except ValueError:
             return "请输入两个整数！"
-    return render_template("index.html")
+    return render_template("index.html", error = False)
 
 @app.route("/result")
 def result():

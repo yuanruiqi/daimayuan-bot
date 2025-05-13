@@ -3,6 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <title>DMYBOT</title>
+    <script>
+        // 页面加载后，若后端传来错误标志，则弹窗提示
+        window.onload = function() {
+            {% if error %}
+            alert("SERVER BUSY");
+            {% endif %}
+        };
+    </script>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap');
