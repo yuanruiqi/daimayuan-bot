@@ -36,6 +36,7 @@ out_file = open('tab', 'w')
 score_dict = {}
 
 for submission_id in range(start_id, end_id + 1):
+    print(submission_id)
     url = f"{base_url}{submission_id}"
     # print(url)
     try:
@@ -85,16 +86,14 @@ for submission_id in range(start_id, end_id + 1):
         
     
     # 暂停 1 秒，避免请求访问过快造成封禁
-    time.sleep(0.001)
+    time.sleep(0.0001)
 
-output_csv = "成绩.csv"
-with open(output_csv, mode='w', newline='', encoding='utf-8') as csvfile:
-    writer = csv.writer(csvfile)
+output_file = "成绩.txt"
+with open(output_file, mode='w', encoding='utf-8') as out_file:
     # 写入表头
-    writer.writerow(["用户名", "题目", "最高分"])
-    # 按字典内容输出每个用户、题目的最高分成绩
+    # out_file.write("用户名\t题目\t最高分\n")
     for (username, problem), max_score in score_dict.items():
-        writer.writerow([username, problem, max_score])
+        out_file.write(f"{username}\n{problem}\n{max_score}\n")
 
-print(f"所有成绩已保存到 {output_csv}")
+print(f"所有成绩已保存到 {output_file}")
 out_file.close()
