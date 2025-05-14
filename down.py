@@ -12,20 +12,25 @@ headers = {
 
 # 将你的登录 cookie 信息复制到下面
 cookies = {
-    'UOJSESSID': 'replace with your UOJSESSID'
+  "uoj_preferred_language": "C++",
+  "uoj_remember_token": "mDS03jtKJfCoPUnqfl33iJaY6EkniCpR4MFRxx1UKwpJDugh5Exr0MHd6Kwl",
+  "uoj_remember_token_checksum": "74634670b43e158cc40797194b6f5785",
+  "uoj_username": "wrkwrk",
+  "uoj_username_checksum": "45c62b8291abd741bd20010f283e39d7",
+  "UOJSESSID": "vsfn2609891aiuusnrqpsssta7"
 }
 
 min_id = 3932620
 
 def run(start_id, end_id, contest_id):
 
-    if (start_id < min_id or end_id - start_id > 2025):
+    if (start_id < min_id):
         return
     
     # 设置起始的 submission ID
     # start_id = 3932620
     # 可根据需要设置结束的 ID（如果未知，也可以设计成一个无限循环，遇到错误就 break）
-    # end_id = 3933050
+    # end_id = q
 
     with open('cache.json', 'r', encoding = 'utf-8') as f:
         cache_dict = json.load(f)
@@ -36,6 +41,8 @@ def run(start_id, end_id, contest_id):
 
     out_file = open('data', 'w')
 
+    _404count = 15
+    
     for submission_id in range(start_id, end_id + 1):
         if (cache_dict.get(str(submission_id)) != None):
             out_str, val = cache_dict.get(str(submission_id))
@@ -47,8 +54,6 @@ def run(start_id, end_id, contest_id):
         # print(url)
         try:
             response = requests.get(url, headers=headers, cookies=cookies, timeout=10)
-            assert(response.status_code == 200)
-            # print(response.status_code)
         except Exception as e:
             print(f"[错误] 请求 {url} 时出现异常: {e}")
             continue
@@ -96,9 +101,13 @@ def run(start_id, end_id, contest_id):
                 print(submission_id)
             except:
                 pass
+        else if response.status_code==404:
+            _404count -= 1
+            print(f"URL: {url} 返回了状态码 404，剩余检测 404 次数为 {_404count}")
         else:
             print(f"[警告] URL: {url} 返回了状态码 {response.status_code}，可能已无数据或需要重新认证")
-        
+        if _404count == 0:
+            break
         # 暂停 1 秒，避免请求访问过快造成封禁
         # time.sleep(0.001)
 
