@@ -21,7 +21,7 @@ def index():
             os.remove('lock')
             return redirect(url_for("result"))
         except ValueError:
-            return "请输入两个整数！"
+            return "请输入三个整数！小概率未知错误。"
     return render_template("index.html", error = False)
 
 @app.route("/result")
