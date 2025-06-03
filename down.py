@@ -12,7 +12,7 @@ headers = {
 
 # 将你的登录 cookie 信息复制到下面
 cookies = {
-  "UOJSESSID": "..."
+  "UOJSESSID": ""
 }
 
 min_id = 3932620
@@ -36,7 +36,11 @@ def run(start_id, end_id, contest_id):
 
     out_file = open('data', 'w')
 
-    _404count = 15
+    out_file.write(str(start_id)+'\n')
+    out_file.write(str(end_id)+'\n')
+    out_file.write(str(contest_id)+'\n')
+
+    _404count = 15 # 防止卡爆
     
     for submission_id in range(start_id, end_id + 1):
         if (cache_dict.get(str(submission_id)) != None):
@@ -101,7 +105,7 @@ def run(start_id, end_id, contest_id):
             print(f"URL: {url} 返回了状态码 404，剩余检测 404 次数为 {_404count}")
         else:
             print(f"[警告] URL: {url} 返回了状态码 {response.status_code}，可能已无数据或需要重新认证")
-        if _404count == 0:
+        if _404count < 0:
             break
         # 暂停 1 秒，避免请求访问过快造成封禁
         # time.sleep(0.001)

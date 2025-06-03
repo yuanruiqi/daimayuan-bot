@@ -13,6 +13,13 @@ int main()
     map<string, int> id;
     vector<string> name;
     int cnt = 0;
+    int extlines = 2;
+    ofstream ext_file("ext.txt");
+    while(extlines--){
+        cin.getline(x,siz);
+        ext_file<<x<<'\n';
+    }
+    ext_file.close();
     for (;;)
     {
         if (!cin.getline(x, siz)) break;

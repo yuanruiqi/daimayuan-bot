@@ -1,7 +1,18 @@
 import pandas as pd
 from bs4 import BeautifulSoup
 
-def generate_ranked_html_with_css(csv_file: str, html_file: str):
+def generate_ranked_html_with_css(ext_file: str,csv_file: str, html_file: str):
+    # 读取附加信息
+    with open(ext_file,"r") as file:
+        #startid
+        startid = file.readline()
+        #endid
+        endid = file.readline()
+        #contest id
+        cid = file.readline()
+
+
+
     # 1. 读取 CSV 并预处理
     df = pd.read_csv(csv_file, skipinitialspace=True)
     df.rename(columns={df.columns[0]: 'Username'}, inplace=True)
@@ -56,7 +67,7 @@ def generate_ranked_html_with_css(csv_file: str, html_file: str):
 </style>
 </head>
 <body>
-<h2>成绩排名表</h2>
+<h2>成绩排名表,from {startid} to {endid},contest id {cid}</h2>
 {table_html}
 </body>
 </html>
@@ -86,10 +97,11 @@ def generate_ranked_html_with_css(csv_file: str, html_file: str):
     # 7. 写文件
     with open(html_file, 'w', encoding='utf-8') as f:
         f.write(str(soup))
-    print(f"已生成带 CSS 渐变色的 HTML：{html_file}")
+    print(f"已生成 HTML：{html_file}")
 
 def run():
     generate_ranked_html_with_css(
+        ext_file="ext.txt",
         csv_file='tab.csv',
         html_file='templates/out.html'
     )
