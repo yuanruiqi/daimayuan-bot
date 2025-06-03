@@ -12,12 +12,7 @@ headers = {
 
 # 将你的登录 cookie 信息复制到下面
 cookies = {
-  "uoj_preferred_language": "C++",
-  "uoj_remember_token": "mDS03jtKJfCoPUnqfl33iJaY6EkniCpR4MFRxx1UKwpJDugh5Exr0MHd6Kwl",
-  "uoj_remember_token_checksum": "74634670b43e158cc40797194b6f5785",
-  "uoj_username": "wrkwrk",
-  "uoj_username_checksum": "45c62b8291abd741bd20010f283e39d7",
-  "UOJSESSID": "vsfn2609891aiuusnrqpsssta7"
+  "UOJSESSID": "..."
 }
 
 min_id = 3932620
