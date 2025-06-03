@@ -96,7 +96,7 @@ def run(start_id, end_id, contest_id):
                 print(submission_id)
             except:
                 pass
-        else if response.status_code==404:
+        elif response.status_code==404:
             _404count -= 1
             print(f"URL: {url} 返回了状态码 404，剩余检测 404 次数为 {_404count}")
         else:
