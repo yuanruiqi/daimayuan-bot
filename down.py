@@ -3,9 +3,46 @@ from bs4 import BeautifulSoup
 import json
 import config
 
+# import time
+
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
+
+# 在模块级别创建会话对象
+def create_session():
+    session = requests.Session()
+    
+    # 设置重试策略
+    retry_strategy = Retry(
+        total=3,  # 最大重试次数
+        backoff_factor=0.5,  # 重试等待时间因子
+        status_forcelist=[429, 500, 502, 503, 504],  # 需要重试的状态码
+        allowed_methods=["GET"]  # 只对GET方法重试
+    )
+    
+    # 创建适配器并应用到会话
+    adapter = HTTPAdapter(
+        max_retries=retry_strategy,
+        pool_connections=100,  # 连接池大小
+        pool_maxsize=100
+    )
+    session.mount("http://", adapter)
+    session.mount("https://", adapter)
+    
+    # 设置默认请求头
+    session.headers.update(config.down.headers)
+    
+    # 设置cookies
+    session.cookies.update(config.down.cookies)
+    
+    return session
+
 def run(start_id, end_id, contest_id):
+    # st = time.time()
     if start_id < config.down.min_id:
         return []
+    
+    session = create_session()
     
     with open(config.general.cache_file, 'r', encoding='utf-8') as f:
         cache_dict = json.load(f)
@@ -21,13 +58,12 @@ def run(start_id, end_id, contest_id):
             if val == contest_id:
                 problem, username, score = out_str.split('\n')
                 submission_data.append((problem, username, score))
-                continue
+            continue
         
         # 抓取新数据
         url = f"{config.down.base_url}{submission_id}"
         try:
-            response = requests.get(url, headers=config.down.headers, 
-                                  cookies=config.down.cookies, timeout=10)
+            response = session.get(url, timeout=config.down.timeout, allow_redirects=True)
         except Exception as e:
             print(f"[错误] 请求 {url} 时出现异常: {e}")
             continue
@@ -63,6 +99,9 @@ def run(start_id, end_id, contest_id):
                 print(f"解析错误: {e}")
                 if 'Compile Error' in table.find_all('a')[2]:
                     cache_dict[str(submission_id)] = ('CE', -1)
+                else:
+                    print('???')
+                    print(submission_id)
         elif response.status_code == 404:
             _404count -= 1
             print(f"URL: {url} 返回了状态码 404，剩余检测 404 次数为 {_404count}")
@@ -74,5 +113,8 @@ def run(start_id, end_id, contest_id):
     # 保存更新后的缓存
     with open(config.general.cache_file, 'w', encoding='utf-8') as f:
         json.dump(cache_dict, f, ensure_ascii=False, indent=4)
+
+    # print(st)
+    # print(time.time())
 
     return submission_data

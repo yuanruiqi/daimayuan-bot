@@ -1,7 +1,7 @@
 from collections import defaultdict
 import pandas as pd
 
-def run(submission_data, start_id, end_id, contest_id):
+def run(submission_data):
     if not submission_data:
         return pd.DataFrame(), []
     

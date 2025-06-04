@@ -13,7 +13,7 @@ def run(a, b, c):
     submission_data = down.run(a, b, c)
     
     # 2. 分析数据生成DataFrame
-    df, name_order = anal.run(submission_data, a, b, c)
+    df, name_order = anal.run(submission_data)
     
     # 3. 生成HTML排名表
     ren.run(df, a, b, c, name_order, config.general.outfile)
