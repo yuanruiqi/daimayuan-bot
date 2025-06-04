@@ -5,10 +5,6 @@ import anal
 import config
 
 def run(a, b, c, progress_callback=None):
-    if not os.path.exists(config.general.cache_file):
-        with open(config.general.cache_file, 'w') as f:
-            f.write('{}')
-    
     # 1. 获取提交数据
     submission_data = down.run(a, b, c, progress_callback)
     
