@@ -4,6 +4,7 @@ class general:
     cache_file='cache.json'
     outtemplate='templates/standing.html'
     waitingfile='waiting.html'
+    cache_dir='./cache'
 
     secretkey = secrets.token_hex(16) # 生成随机密钥
 
