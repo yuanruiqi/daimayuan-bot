@@ -8,3 +8,4 @@ tab.csv
 templates/out.html
 lock
 ext.txt
+__pycache__/*

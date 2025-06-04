@@ -2,24 +2,11 @@ import requests
 from bs4 import BeautifulSoup
 import json
 # import time
-
-# 请求头, 模拟浏览器请求
-headers = {
-    'User-Agent': ('Mozilla/5.0 (Windows NT 10.0; Win64; x64) '
-                   'AppleWebKit/537.36 (KHTML, like Gecko) '
-                   'Chrome/90.0.4430.93 Safari/537.36')
-}
-
-# 将你的登录 cookie 信息复制到下面
-cookies = {
-  "UOJSESSID": ""
-}
-
-min_id = 3932620
+import config
 
 def run(start_id, end_id, contest_id):
 
-    if (start_id < min_id):
+    if (start_id < config.down.min_id):
         return
     
     # 设置起始的 submission ID
@@ -27,20 +14,18 @@ def run(start_id, end_id, contest_id):
     # 可根据需要设置结束的 ID（如果未知，也可以设计成一个无限循环，遇到错误就 break）
     # end_id = q
 
-    with open('cache.json', 'r', encoding = 'utf-8') as f:
+    with open(config.general.cache_file, 'r', encoding = 'utf-8') as f:
         cache_dict = json.load(f)
-
-    base_url = 'http://oj.daimayuan.top/submission/'
 
     # start_id, end_id = map(int, input().split())
 
-    out_file = open('data', 'w')
+    out_file = open(config.general.datafile, 'w')
 
     out_file.write(str(start_id)+'\n')
     out_file.write(str(end_id)+'\n')
     out_file.write(str(contest_id)+'\n')
 
-    _404count = 15 # 防止卡爆
+    _404count = config.down.max_404_count # 防止卡爆
     
     for submission_id in range(start_id, end_id + 1):
         if (cache_dict.get(str(submission_id)) != None):
@@ -49,10 +34,10 @@ def run(start_id, end_id, contest_id):
                 continue
             print(out_str, file = out_file)
             continue
-        url = f"{base_url}{submission_id}"
+        url = f"{config.down.base_url}{submission_id}"
         # print(url)
         try:
-            response = requests.get(url, headers=headers, cookies=cookies, timeout=10)
+            response = requests.get(url, headers=config.down.headers, cookies=config.down.cookies, timeout=10)
         except Exception as e:
             print(f"[错误] 请求 {url} 时出现异常: {e}")
             continue
@@ -110,7 +95,7 @@ def run(start_id, end_id, contest_id):
         # 暂停 1 秒，避免请求访问过快造成封禁
         # time.sleep(0.001)
 
-    with open('cache.json', 'w', encoding='utf-8') as f:
+    with open(config.general.cache_file, 'w', encoding='utf-8') as f:
         json.dump(cache_dict, f, ensure_ascii=False, indent=4)
 
     out_file.close()

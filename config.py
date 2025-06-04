@@ -1,0 +1,28 @@
+class general:
+    cache_file='cache.json'
+    extfile='ext.txt'
+    csvfile='tab.csv'
+    datafile='data'
+    outfile='templates/out.html'
+
+class down:
+    # 请求头, 模拟浏览器请求
+    headers = {
+        'User-Agent': ('Mozilla/5.0 (Windows NT 10.0; Win64; x64) '
+                    'AppleWebKit/537.36 (KHTML, like Gecko) '
+                    'Chrome/90.0.4430.93 Safari/537.36')
+    }
+
+    # 将你的登录 cookie 信息复制到下面
+    cookies = {
+        "UOJSESSID": ""
+    }
+
+    min_id = 3932620
+
+    base_url = 'http://oj.daimayuan.top/submission/'
+
+    max_404_count =15
+
+class anal:
+    extlines = 3
