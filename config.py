@@ -1,8 +1,5 @@
 class general:
     cache_file='cache.json'
-    extfile='ext.txt'
-    csvfile='tab.csv'
-    datafile='data'
     outfile='templates/out.html'
 
 class down:

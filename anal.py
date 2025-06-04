@@ -1,62 +1,54 @@
 from collections import defaultdict
-import config
+import pandas as pd
 
-def run(data_file=config.general.datafile, output_file=config.general.csvfile, ext_file=config.general.extfile, debug=False):
-    # raise ValueError
-    siz = 1 << 15
-    cnt = 0
+def run(submission_data, start_id, end_id, contest_id):
+    if not submission_data:
+        return pd.DataFrame(), []
+    
+    # 创建数据结构
     id_map = {}
-    name = []
-    m = defaultdict(lambda: defaultdict(int))
-
-    # 打开输入输出文件
-    with open(data_file, "r") as fin, open(output_file, "w") as fout, open(ext_file, "w") as fext:
-
-        # 读前两行写入 ext.txt
-        for _ in range(config.anal.extlines):
-            line = fin.readline()
-            fext.write(line)
-            if debug:
-                print(f"[DEBUG] ext line: {line.strip()}")
-
-        while True:
-            x = fin.readline()
-            if not x or x == "\n":
-                break
-            y = fin.readline()
-            z = fin.readline()
-            if not y or not z:
-                break
-
-            a = x.strip()
-            b = y.strip()
-            try:
-                c = int(z.strip())
-            except ValueError:
-                if debug:
-                    print(f"[WARNING] invalid int in line: {z.strip()}")
-                continue
-
-            if a not in id_map:
-                cnt += 1
-                id_map[a] = cnt
-                name.append(a)
-                if debug:
-                    print(f"[DEBUG] New id_map entry: {a} -> {cnt}")
-
-            prev_val = m[b][id_map[a]]
-            m[b][id_map[a]] = max(prev_val, c)
-            if debug:
-                print(f"[DEBUG] m[{b}][{id_map[a]}] = {m[b][id_map[a]]} (was {prev_val})")
-
-        # 输出 header
-        fout.write("#, " + ", ".join(name) + "\n")
-        if debug:
-            print("[DEBUG] Header: " + ", ".join(name))
-
-        # 输出每行数据
-        for s, p in m.items():
-            row = [s] + [str(p.get(i, 0)) for i in range(1, cnt + 1)]
-            fout.write(", ".join(row) + "\n")
-            if debug:
-                print(f"[DEBUG] Row for {s}: {row}")
+    name_list = []
+    problem_scores = defaultdict(lambda: defaultdict(int))
+    
+    # 处理每条提交记录
+    for problem, username, score in submission_data:
+        try:
+            score_val = int(score)
+        except ValueError:
+            continue
+        
+        # 映射用户名到ID
+        if username not in id_map:
+            new_id = len(id_map) + 1
+            id_map[username] = new_id
+            name_list.append(username)
+        
+        user_id = id_map[username]
+        
+        # 更新最高分
+        if score_val > problem_scores[problem][user_id]:
+            problem_scores[problem][user_id] = score_val
+    
+    # 创建DataFrame
+    df_data = []
+    for problem, user_scores in problem_scores.items():
+        row = [problem]
+        for user_id in range(1, len(id_map) + 1):
+            row.append(user_scores.get(user_id, 0))
+        df_data.append(row)
+    
+    # 添加总分行
+    total_row = ['总分'] + [0] * len(id_map)
+    for row in df_data:
+        for i, score in enumerate(row[1:], 1):
+            total_row[i] += score
+    df_data.append(total_row)
+    
+    # 创建DataFrame
+    df = pd.DataFrame(df_data, columns=['题目'] + name_list)
+    
+    # 转置DataFrame
+    df_transposed = df.set_index('题目').T.reset_index()
+    df_transposed.columns = ['用户名'] + list(df_transposed.columns[1:])
+    
+    return df_transposed, name_list
