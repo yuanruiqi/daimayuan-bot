@@ -1,7 +1,6 @@
 class general:
     cache_file='cache.json'
-    outfile='out.html'
-    outtemplate='templates/outtemplate.html'
+    outtemplate='templates/standing.html'
     waitingfile='waiting.html'
 
 class down:

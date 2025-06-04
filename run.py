@@ -16,4 +16,4 @@ def run(a, b, c, progress_callback=None):
     df, name_order = anal.run(submission_data)
     
     # 3. 生成HTML排名表
-    ren.run(df, a, b, c, name_order, config.general.outfile)
+    return ren.run(df, a, b, c)

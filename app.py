@@ -1,6 +1,6 @@
 # app.py
 
-from flask import Flask, request, render_template, render_template_string, redirect, url_for, session
+from flask import Flask, request, render_template, render_template_string, redirect, url_for, session, abort
 from run import run
 import os
 import threading
@@ -13,6 +13,11 @@ app = Flask(__name__)
 app.secret_key = secrets.token_hex(16) # 生成随机密钥
 # 用于存储所有任务的进度
 task_progress = {}
+html = {}
+
+def pop(id):
+    task_progress.pop(id, None)
+    html.pop(id, None)
 
 def run_in_background(a, b, c, task_id):
     try:
@@ -26,7 +31,7 @@ def run_in_background(a, b, c, task_id):
         }
         
         # 运行爬取任务
-        run(a, b, c, update_progress_callback(task_id))
+        html[task_id] = run(a, b, c, update_progress_callback(task_id))
         
         # 标记任务完成
         task_progress[task_id]["status"] = "completed"
@@ -40,8 +45,8 @@ def run_in_background(a, b, c, task_id):
         # 清理lock文件
         if os.path.exists('lock'):
             os.remove('lock')
-        # 0.1分钟后清理进度数据
-        threading.Timer(6, lambda: task_progress.pop(task_id, None)).start()
+        # 10 分钟后清理进度数据
+        threading.Timer(600, lambda: pop(task_id)).start()
 
 def update_progress_callback(task_id):
     def callback(current, total, current_id):
@@ -100,9 +105,12 @@ def progress():
 @app.route("/result")
 def result():
     # 直接读取生成的 out.html
-    with open(config.general.outfile, "r", encoding="utf-8") as f:
-        html_content = f.read()
-    return render_template_string(html_content)
+    task_id = session.get('task_id')
+    if task_id and task_id in html:
+        return render_template_string(html[task_id])
+    else:
+        abort(404)
+    # return render_template(config.general.outfile)
 
 if __name__ == "__main__":
     app.run(debug=False)

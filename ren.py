@@ -3,7 +3,7 @@ from bs4 import BeautifulSoup
 from jinja2 import Template
 import config
 
-def run(df, startid, endid, cid, name_order, html_file):
+def run(df, startid, endid, cid):
     if df.empty:
         return
 
@@ -12,8 +12,8 @@ def run(df, startid, endid, cid, name_order, html_file):
     table_html = generate_table_html(df_sorted)
     html = build_html(table_html, startid, endid, cid)
     html = add_cell_coloring(html, df_sorted)
-    save_html(html, html_file)
-    print(f"已生成 HTML：{html_file}")
+    # print(f"已生成 HTML：{html_file}")
+    return html
 
 def prepare_data(df):
     df = df.copy()
@@ -66,6 +66,6 @@ def add_cell_coloring(html, df_sorted):
                     continue
     return str(soup)
 
-def save_html(html, html_file):
-    with open(html_file, 'w', encoding='utf-8') as f:
-        f.write(html)
+# def save_html(html, html_file):
+#     with open(html_file, 'w', encoding='utf-8') as f:
+#         f.write(html)
