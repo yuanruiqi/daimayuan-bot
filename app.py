@@ -70,8 +70,8 @@ def index():
             #     return render_template("index.html", error=True)
                 
             # 创建锁文件
-            with open('lock', 'w') as f:
-                f.write('working')
+            # with open('lock', 'w') as f:
+            #     f.write('working')
             
             # 生成唯一任务ID
             task_id = f"{a}-{b}-{c}-{time.time()}"
