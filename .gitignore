@@ -4,3 +4,4 @@ Pipfile.lock
 cache.json
 lock
 __pycache__/*
+cache/*
