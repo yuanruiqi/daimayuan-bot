@@ -6,11 +6,11 @@ def generate_ranked_html_with_css(ext_file: str,csv_file: str, html_file: str):
     # 读取附加信息
     with open(ext_file,"r") as file:
         #startid
-        startid = file.readline()
+        startid = file.readline().strip()
         #endid
-        endid = file.readline()
+        endid = file.readline().strip()
         #contest id
-        cid = file.readline()
+        cid = file.readline().strip()
 
 
 
@@ -68,8 +68,10 @@ def generate_ranked_html_with_css(ext_file: str,csv_file: str, html_file: str):
 </style>
 </head>
 <body>
-<h2>成绩排名表,from {startid} to {endid},contest id {cid}</h2>
+<h2>成绩排名表</h2>
 {table_html}
+<br></br>
+<a>({startid}, {endid}, {cid})</a>
 </body>
 </html>
 """
