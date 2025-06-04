@@ -7,6 +7,7 @@ import threading
 import json
 import time
 import secrets
+import config
 
 app = Flask(__name__)
 app.secret_key = secrets.token_hex(16) # 生成随机密钥
@@ -87,7 +88,7 @@ def index():
 
 @app.route("/waiting")
 def waiting():
-    return render_template("waiting.html")
+    return render_template(config.general.waitingfile)
 
 @app.route("/progress")
 def progress():
@@ -99,7 +100,7 @@ def progress():
 @app.route("/result")
 def result():
     # 直接读取生成的 out.html
-    with open("templates/out.html", "r", encoding="utf-8") as f:
+    with open(config.general.outfile, "r", encoding="utf-8") as f:
         html_content = f.read()
     return render_template_string(html_content)
 
