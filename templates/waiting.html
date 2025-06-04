@@ -1,0 +1,99 @@
+<!-- templates/waiting.html -->
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>处理中 - DMYBOT</title>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(to right, #e0eafc, #cfdef3);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .container {
+            background-color: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+        }
+        .progress-container {
+            margin: 30px 0;
+        }
+        .progress-bar {
+            height: 20px;
+            background-color: #f0f0f0;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(to right, #4facfe 0%, #00f2fe 100%);
+            border-radius: 10px;
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+        .status-text {
+            margin-top: 15px;
+            font-size: 16px;
+            color: #555;
+        }
+        .info-text {
+            margin: 20px 0;
+            font-size: 14px;
+            color: #777;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>正在处理您的请求</h1>
+        
+        <div class="progress-container">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress-fill"></div>
+            </div>
+            <div class="status-text" id="status-text">初始化中...</div>
+        </div>
+        
+        <div class="info-text" id="info-text">请耐心等待，这可能需要一些时间...</div>
+        
+        <script>
+            function updateProgress() {
+                fetch('/progress')
+                    .then(response => response.json())
+                    .then(data => {
+                        const progress = data.progress || 0;
+                        const status = data.status || 'not_started';
+                        
+                        document.getElementById('progress-fill').style.width = progress + '%';
+                        
+                        if (status === 'completed') {
+                            window.location.href = '/result';
+                        } else if (status === 'running') {
+                            document.getElementById('status-text').textContent = 
+                                `处理中: ${progress}% (当前ID: ${data.current || 'N/A'})`;
+                            document.getElementById('info-text').textContent = 
+                                `扫描范围: ${data.start} 到 ${data.end}`;
+                        } else if (status === 'error') {
+                            document.getElementById('status-text').textContent = '处理出错！';
+                            document.getElementById('info-text').textContent = data.error || '未知错误';
+                        } else {
+                            document.getElementById('status-text').textContent = '等待任务开始...';
+                        }
+                    });
+            }
+            
+            // 每2秒更新一次进度
+            setInterval(updateProgress, 2000);
+            updateProgress(); // 初始加载
+        </script>
+    </div>
+</body>
+</html>
