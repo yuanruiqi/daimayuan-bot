@@ -1,19 +1,19 @@
 from collections import defaultdict
+import config
 
-def run(data_file="data", output_file="tab.csv", ext_file="ext.txt", debug=False):
+def run(data_file=config.general.datafile, output_file=config.general.csvfile, ext_file=config.general.extfile, debug=False):
     # raise ValueError
     siz = 1 << 15
     cnt = 0
     id_map = {}
     name = []
     m = defaultdict(lambda: defaultdict(int))
-    extlines = 3
 
     # 打开输入输出文件
     with open(data_file, "r") as fin, open(output_file, "w") as fout, open(ext_file, "w") as fext:
 
         # 读前两行写入 ext.txt
-        for _ in range(extlines):
+        for _ in range(config.anal.extlines):
             line = fin.readline()
             fext.write(line)
             if debug:
