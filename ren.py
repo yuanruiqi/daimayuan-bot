@@ -1,5 +1,6 @@
 import pandas as pd
 from bs4 import BeautifulSoup
+import config
 
 def generate_ranked_html_with_css(ext_file: str,csv_file: str, html_file: str):
     # 读取附加信息
@@ -101,7 +102,7 @@ def generate_ranked_html_with_css(ext_file: str,csv_file: str, html_file: str):
 
 def run():
     generate_ranked_html_with_css(
-        ext_file="ext.txt",
-        csv_file='tab.csv',
-        html_file='templates/out.html'
+        ext_file=config.general.extfile,
+        csv_file=config.general.csvfile,
+        html_file=config.general.outfile
     )
