@@ -56,6 +56,8 @@ def run(start_id, end_id, contest_id, progress_callback=None):
     current_progress = 0
     
     for submission_id in range(start_id, end_id + 1):
+        processed += 1
+        current_progress = int(processed / total * 100)
         # 更新进度回调
         if progress_callback and (processed % 10 == 0 or current_progress != last_progress):
             progress_callback(processed, total, submission_id)
@@ -119,9 +121,6 @@ def run(start_id, end_id, contest_id, progress_callback=None):
                 break
         else:
             print(f"[警告] URL: {url} 返回了状态码 {response.status_code}")
-        
-        processed += 1
-        current_progress = int(processed / total * 100)
     
 
     # 保存更新后的缓存
