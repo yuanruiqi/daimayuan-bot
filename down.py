@@ -2,6 +2,7 @@ import requests
 from bs4 import BeautifulSoup
 import json
 import config
+from diskcache import Cache
 
 # import time
 
@@ -44,8 +45,10 @@ def run(start_id, end_id, contest_id, progress_callback=None):
     
     session = create_session()
     
-    with open(config.general.cache_file, 'r', encoding='utf-8') as f:
-        cache_dict = json.load(f)
+    # with open(config.general.cache_file, 'r', encoding='utf-8') as f:
+    #     cache_dict = json.load(f)
+    cache_dict = Cache('./cache')
+    # print(cache_dict)
 
     submission_data = []
     _404count = config.down.max_404_count
@@ -124,8 +127,8 @@ def run(start_id, end_id, contest_id, progress_callback=None):
     
 
     # 保存更新后的缓存
-    with open(config.general.cache_file, 'w', encoding='utf-8') as f:
-        json.dump(cache_dict, f, ensure_ascii=False, indent=4)
+    # with open(config.general.cache_file, 'w', encoding='utf-8') as f:
+    #     json.dump(cache_dict, f, ensure_ascii=False, indent=4)
 
     if progress_callback:
         progress_callback(total, total, end_id)

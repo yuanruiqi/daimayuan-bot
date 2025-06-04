@@ -66,8 +66,8 @@ def index():
             b = int(request.form["b"])
             c = int(request.form["c"])
             
-            if os.path.exists('lock'):
-                return render_template("index.html", error=True)
+            # if os.path.exists('lock'):
+            #     return render_template("index.html", error=True)
                 
             # 创建锁文件
             with open('lock', 'w') as f:
