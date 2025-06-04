@@ -40,8 +40,8 @@ def run_in_background(a, b, c, task_id):
         # 清理lock文件
         if os.path.exists('lock'):
             os.remove('lock')
-        # 10分钟后清理进度数据
-        threading.Timer(600, lambda: task_progress.pop(task_id, None)).start()
+        # 0.1分钟后清理进度数据
+        threading.Timer(6, lambda: task_progress.pop(task_id, None)).start()
 
 def update_progress_callback(task_id):
     def callback(current, total, current_id):
