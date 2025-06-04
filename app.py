@@ -69,7 +69,7 @@ def index():
                 f.write('working')
             
             # 生成唯一任务ID
-            task_id = f"{a}-{b}-{c}-{int(time.time())}"
+            task_id = f"{a}-{b}-{c}-{time.time()}"
             session['task_id'] = task_id
             
             # 启动后台线程
