@@ -43,8 +43,8 @@ def run_in_background(a, b, c, task_id):
         task_progress[task_id]["error"] = str(e)
     finally:
         # 清理lock文件
-        if os.path.exists('lock'):
-            os.remove('lock')
+        # if os.path.exists('lock'):
+        #     os.remove('lock')
         # 10 分钟后清理进度数据
         threading.Timer(600, lambda: pop(task_id)).start()
 
