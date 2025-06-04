@@ -4,13 +4,13 @@ import ren
 import anal
 import config
 
-def run(a, b, c):
+def run(a, b, c, progress_callback=None):
     if not os.path.exists(config.general.cache_file):
         with open(config.general.cache_file, 'w') as f:
             f.write('{}')
     
     # 1. 获取提交数据
-    submission_data = down.run(a, b, c)
+    submission_data = down.run(a, b, c, progress_callback)
     
     # 2. 分析数据生成DataFrame
     df, name_order = anal.run(submission_data)
