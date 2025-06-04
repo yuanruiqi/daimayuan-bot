@@ -37,7 +37,7 @@ def create_session():
     
     return session
 
-def run(start_id, end_id, contest_id):
+def run(start_id, end_id, contest_id, progress_callback=None):
     # st = time.time()
     if start_id < config.down.min_id:
         return []
@@ -50,7 +50,19 @@ def run(start_id, end_id, contest_id):
     submission_data = []
     _404count = config.down.max_404_count
     
+    total = end_id - start_id + 1
+    processed = 0
+    last_progress = 0
+    current_progress = 0
+    
     for submission_id in range(start_id, end_id + 1):
+        processed += 1
+        current_progress = int(processed / total * 100)
+        # 更新进度回调
+        if progress_callback and (processed % 10 == 0 or current_progress != last_progress):
+            progress_callback(processed, total, submission_id)
+            last_progress = current_progress
+        
         # 检查缓存
         cache_entry = cache_dict.get(str(submission_id))
         if cache_entry:
@@ -109,10 +121,14 @@ def run(start_id, end_id, contest_id):
                 break
         else:
             print(f"[警告] URL: {url} 返回了状态码 {response.status_code}")
+    
 
     # 保存更新后的缓存
     with open(config.general.cache_file, 'w', encoding='utf-8') as f:
         json.dump(cache_dict, f, ensure_ascii=False, indent=4)
+
+    if progress_callback:
+        progress_callback(total, total, end_id)
 
     # print(st)
     # print(time.time())
