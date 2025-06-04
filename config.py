@@ -1,7 +1,11 @@
+import secrets
+
 class general:
     cache_file='cache.json'
     outtemplate='templates/standing.html'
     waitingfile='waiting.html'
+
+    secretkey = secrets.token_hex(16) # 生成随机密钥
 
 class down:
     # 请求头, 模拟浏览器请求
