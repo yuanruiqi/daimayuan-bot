@@ -40,7 +40,7 @@ def create_session():
 
 def run(start_id, end_id, contest_id, progress_callback=None):
     # st = time.time()
-    if start_id < config.down.min_id:
+    if start_id < config.down.min_id or start_id > end_id:
         return []
     
     session = create_session()

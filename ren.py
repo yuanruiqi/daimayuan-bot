@@ -4,8 +4,8 @@ from jinja2 import Template
 import config
 
 def run(df, startid, endid, cid):
-    if df.empty:
-        return
+    # if df.empty:
+    #     return ""
 
     df = prepare_data(df)
     df_sorted = sort_and_rank(df)
