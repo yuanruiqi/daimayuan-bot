@@ -1,6 +1,7 @@
 import pandas as pd
 from bs4 import BeautifulSoup
 from jinja2 import Template
+import config
 
 def run(df, startid, endid, cid, name_order, html_file):
     if df.empty:
@@ -34,7 +35,7 @@ def generate_table_html(df_sorted):
     )
 
 def build_html(table_html, startid, endid, cid):
-    with open('template.html', 'r', encoding='utf-8') as f:
+    with open(config.general.outtemplate, 'r', encoding='utf-8') as f:
         html_template = f.read()
     template = Template(html_template)
     return template.render(

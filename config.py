@@ -1,6 +1,7 @@
 class general:
     cache_file='cache.json'
     outfile='templates/out.html'
+    outtemplate='template.html'
 
 class down:
     # 请求头, 模拟浏览器请求
@@ -15,7 +16,7 @@ class down:
 
     # 将你的登录 cookie 信息复制到下面
     cookies = {
-        "UOJSESSID": ""
+        "UOJSESSID": "3htc4g05jcb0oa4pn5adtjhe3n"
     }
 
     min_id = 3932620
