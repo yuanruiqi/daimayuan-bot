@@ -21,7 +21,7 @@ class down:
 
     # 将你的登录 cookie 信息复制到下面
     cookies = {
-        "UOJSESSID": ""
+        "UOJSESSID": "3htc4g05jcb0oa4pn5adtjhe3n"
     }
 
     min_id = 3932620
@@ -31,6 +31,8 @@ class down:
     max_404_count =15
 
     timeout = 10
+
+    batch_size = 8
 
 class anal:
     pass
