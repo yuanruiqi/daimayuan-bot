@@ -32,5 +32,7 @@ class down:
 
     timeout = 10
 
+    batch_size = 8
+
 class anal:
     pass
