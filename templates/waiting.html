@@ -49,6 +49,24 @@
             font-size: 14px;
             color: #777;
         }
+        
+        /* 添加取消按钮样式 */
+        .cancel-btn {
+            display: block;
+            margin: 30px auto 0;
+            padding: 12px 30px;
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        .cancel-btn:hover {
+            background-color: #c0392b;
+        }
     </style>
 </head>
 <body>
@@ -63,6 +81,7 @@
         </div>
         
         <div class="info-text" id="info-text">请耐心等待，这可能需要一些时间...</div>
+        <button id="cancel-btn" class="cancel-btn">取消任务</button>
         
         <script>
             function updateProgress() {
@@ -89,6 +108,26 @@
                         }
                     });
             }
+            // 添加取消按钮事件处理
+            document.getElementById('cancel-btn').addEventListener('click', function() {
+                if (confirm('确定要取消当前任务吗？')) {
+                    fetch('/cancel', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            alert('任务已取消');
+                            window.location.href = '/';
+                        } else {
+                            alert('取消任务失败: ' + data.message);
+                        }
+                    });
+                }
+            });
             
             // 每2秒更新一次进度
             setInterval(updateProgress, 2000);

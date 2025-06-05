@@ -1,6 +1,6 @@
 # app.py
 
-from flask import Flask, request, render_template, render_template_string, redirect, url_for, session, abort
+from flask import Flask, request, render_template, render_template_string, redirect, url_for, session, abort,jsonify
 from run import run
 import os
 import threading
@@ -14,10 +14,14 @@ app.secret_key = config.general.secretkey
 # 用于存储所有任务的进度
 task_progress = {}
 html = {}
+task_cancel_flags = {}
 
 def pop(id):
     task_progress.pop(id, None)
     html.pop(id, None)
+
+def pop_task(id):
+    task_cancel_flags.pop(id, None)
 
 def run_in_background(a, b, c, task_id):
     try:
@@ -31,7 +35,7 @@ def run_in_background(a, b, c, task_id):
         }
         
         # 运行爬取任务
-        html[task_id] = run(a, b, c, update_progress_callback(task_id))
+        html[task_id] = run(a, b, c, task_id, update_progress_callback(task_id),should_cancel)
         
         # 标记任务完成
         task_progress[task_id]["status"] = "completed"
@@ -115,6 +119,23 @@ def result():
 @app.errorhandler(404)
 def show_404_page(e):
     return render_template('404.html'), 404
+
+@app.route("/cancel", methods=["POST"])
+def cancel_task():
+    """取消当前用户的任务"""
+    task_id = session.get('task_id')
+    if not task_id:
+        return jsonify(success=False, message="未找到任务ID")
+    
+    # 设置取消标志
+    task_cancel_flags[task_id] = True
+    # timeout*bench是单次执行极限
+    threading.Timer(config.down.batch_size*config.down.timeout+5,lambda:pop_task(task_id)).start()
+
+    return jsonify(success=True, message="任务取消请求已发送")
+
+def should_cancel(task_id):
+    return task_cancel_flags.get(task_id,False)
 
 if __name__ == "__main__":
     app.run(debug=False)
