@@ -33,4 +33,4 @@ class down:
     timeout = 10
 
 class anal:
-    extlines = 3
+    pass
