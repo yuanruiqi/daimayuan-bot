@@ -10,7 +10,7 @@ import secrets
 import config
 
 app = Flask(__name__)
-app.secret_key = secrets.token_hex(16) # 生成随机密钥
+app.secret_key = config.general.secretkey
 # 用于存储所有任务的进度
 task_progress = {}
 html = {}
