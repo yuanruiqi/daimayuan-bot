@@ -36,11 +36,14 @@ def run_in_background(a, b, c, task_id):
         
         # 运行爬取任务
         html[task_id] = run(a, b, c, task_id, update_progress_callback(task_id),should_cancel)
-        
-        # 标记任务完成
-        task_progress[task_id]["status"] = "completed"
-        task_progress[task_id]["progress"] = 100
-        
+        if task_cancel_flags.get(task_id,False):
+            # 标记任务完成
+            task_progress[task_id]["status"] = "cancelled"
+            task_progress[task_id]["progress"] = 0
+        else:
+            # 标记任务完成
+            task_progress[task_id]["status"] = "completed"
+            task_progress[task_id]["progress"] = 100
     except Exception as e:
         print(f"后台任务出错: {e}")
         task_progress[task_id]["status"] = "error"
