@@ -112,5 +112,9 @@ def result():
         abort(404)
     # return render_template(config.general.outfile)
 
+@app.errorhandler(404)
+def show_404_page(e):
+    return render_template('404.html'), 404
+
 if __name__ == "__main__":
     app.run(debug=False)
