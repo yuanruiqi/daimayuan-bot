@@ -29,16 +29,42 @@
     background: linear-gradient(to right, #e0eafc, #cfdef3);
     color: var(--text-color);
     min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 0;
+  }
+  
+  .main-container {
+    max-width: 1200px;
+    width: 100%;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+  
+  .content-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 12px 30px rgba(0,0,0,0.15);
+    padding: 25px;
+    position: relative;
+    overflow: hidden;
   }
   
   .header {
     background: var(--card-bg);
     color: var(--dark-color);
-    padding: 25px 0;
-    margin-bottom: 25px;
+    padding: 25px;
     border-radius: 12px;
     box-shadow: 0 4px 20px rgba(0,0,0,0.08);
     text-align: center;
+    position: relative;
+    z-index: 2;
   }
   
   .header h1 {
@@ -53,8 +79,9 @@
     border-radius: 12px;
     box-shadow: 0 4px 15px rgba(0,0,0,0.08);
     padding: 25px;
-    margin-bottom: 25px;
     transition: all 0.3s;
+    position: relative;
+    z-index: 2;
   }
   
   .controls {
@@ -138,16 +165,17 @@
     position: sticky;
     top: 0;
     background: var(--primary-color);
-    color: white;
+    color: #6b9acf;
     z-index: 10;
     padding: 12px 15px;
     font-weight: 600;
     cursor: pointer;
-    transition: background-color 0.2s;
+    transition: background-color 1s;
   }
   
   thead th:hover {
     background-color: #1e5a9c;
+    color: white
   }
   
   th, td {
@@ -225,6 +253,8 @@
     padding: 15px;
     border-radius: 12px;
     box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    position: relative;
+    z-index: 2;
   }
   
   /* 排序指示器 */
@@ -302,6 +332,12 @@
       padding: 10px 12px;
       font-size: 14px;
     }
+    .main-container {
+      padding: 10px;
+    }
+    .content-wrapper {
+      padding: 15px;
+    }
   }
   
   /* 分数单元格样式 */
@@ -348,77 +384,109 @@
     width: 0%;
     transition: width 0.5s ease;
   }
+  
+  /* 装饰元素 */
+  .decor-element {
+    position: absolute;
+    z-index: 1;
+    opacity: 0.1;
+    pointer-events: none;
+  }
+  
+  .decor-circle {
+    width: 200px;
+    height: 200px;
+    border-radius: 50%;
+    border: 15px solid var(--primary-color);
+    top: -50px;
+    right: -50px;
+  }
+  
+  .decor-blob {
+    width: 300px;
+    height: 300px;
+    border-radius: 50% 30% 70% 40%;
+    background: linear-gradient(135deg, #4facfe, #00f2fe);
+    bottom: -100px;
+    left: -100px;
+    transform: rotate(45deg);
+  }
 </style>
 </head>
 <body>
-<div class="container">
-  <div class="header d-flex justify-content-between align-items-center my-4">
-    <h1 class="mx-auto">成绩排名表</h1>
-    <form action="/retry" method="post">
-      <input type="hidden" name="a" value="{{startid}}">
-      <input type="hidden" name="b" value="{{endid}}">
-      <input type="hidden" name="c" value="{{cid}}">
-      <button id="retryButton" class="btn btn-danger px-4 py-2" style="font-weight: 600; margin-right:20px">
-        重试查询
-      </button>
-    </form>
-  </div>
-</div>
-</div>
-
-<div class="container">
-  <div class="card">
-    <div class="controls">
-      <div class="search-container">
-        <input type="text" id="searchInput" placeholder="搜索用户名...">
-      </div>
-      <div class="fullscreen-controls">
-        <button id="toggleFullscreen" class="fullscreen-btn" title="全屏显示">
-          ↗
-        </button>
-        <button id="exitFullscreen" class="fullscreen-btn" title="退出全屏">
-          ✕
-        </button>
+<div class="main-container">
+  <div class="content-wrapper">
+    <!-- 装饰元素 -->
+    <div class="decor-element decor-circle"></div>
+    <div class="decor-element decor-blob"></div>
+    
+    <div class="header">
+      <div class="header d-flex justify-content-between align-items-center my-4">
+        <h1 class="mx-auto">成绩排名表</h1>
+        <form action="/retry" method="post">
+          <input type="hidden" name="a" value="{{startid}}">
+          <input type="hidden" name="b" value="{{endid}}">
+          <input type="hidden" name="c" value="{{cid}}">
+          <button id="retryButton" class="btn btn-danger px-4 py-2" style="font-weight: 600; margin-right:20px">
+            重试查询
+          </button>
+        </form>
       </div>
     </div>
-  </div>
-
-  <div class="card">
-    <div class="table-container">
-      <!-- 表格内容将由后端模板渲染 -->
-      {{table_html}}
-    </div>
-  </div>
-
-  <div class="stats-container">
-    <div class="card chart-container">
-      <canvas id="scoreDistributionChart"></canvas>
-    </div>
-    <div class="card summary-container">
-      <h3>统计摘要</h3>
-      <div class="summary-grid">
-        <div class="summary-item">
-          <div class="summary-label">总人数</div>
-          <div class="summary-value" id="totalCount">0</div>
+    
+    <div class="card">
+      <div class="controls">
+        <div class="search-container">
+          <input type="text" id="searchInput" placeholder="搜索用户名...">
         </div>
-        <div class="summary-item">
-          <div class="summary-label">最高分</div>
-          <div class="summary-value" id="maxScore">0</div>
-        </div>
-        <div class="summary-item">
-          <div class="summary-label">平均分</div>
-          <div class="summary-value" id="avgScore">0</div>
-        </div>
-        <div class="summary-item">
-          <div class="summary-label">中位数</div>
-          <div class="summary-value" id="medianScore">0</div>
+        <div class="fullscreen-controls">
+          <button id="toggleFullscreen" class="fullscreen-btn" title="全屏显示">
+            ↗
+          </button>
+          <button id="exitFullscreen" class="fullscreen-btn" title="退出全屏">
+            ✕
+          </button>
         </div>
       </div>
     </div>
-  </div>
-
-  <div class="footer">
-    <p>生成时间: <span id="timestamp"></span> | 数据范围: {{startid}} 到 {{endid}} | 比赛编号: {{cid}}</p>
+    
+    <div class="card">
+      <div class="table-container">
+        <!-- 表格内容将由后端模板渲染 -->
+        {{table_html}}
+      </div>
+    </div>
+    
+    <div class="stats-container">
+      <div class="card chart-container">
+        <canvas id="scoreDistributionChart"></canvas>
+      </div>
+      <div class="card summary-container">
+        <h3>统计摘要</h3>
+        <div class="summary-grid">
+          <div class="summary-item">
+            <div class="summary-label">总人数</div>
+            <div class="summary-value" id="totalCount">0</div>
+          </div>
+          <div class="summary-item">
+            <div class="summary-label">最高分</div>
+            <div class="summary-value" id="maxScore">0</div>
+          </div>
+          <div class="summary-item">
+            <div class="summary-label">平均分</div>
+            <div class="summary-value" id="avgScore">0</div>
+          </div>
+          <div class="summary-item">
+            <div class="summary-label">中位数</div>
+            <div class="summary-value" id="medianScore">0</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="footer">
+      <p>生成时间: <span id="timestamp"></span> | 数据范围: {{startid}} 到 {{endid}} | 比赛编号: {{cid}}</p>
+    </div>
   </div>
 </div>
 
