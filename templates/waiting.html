@@ -133,7 +133,7 @@
         <div class="info-text" id="info-text">请耐心等待，这可能需要一些时间...</div>
 
         <button id="cancel-btn" class="cancel-btn">取消任务</button>
-        <button id="home-btn" class="home-btn">回到主页</button>
+        <button id="home-btn" class="home-btn" style="display: none;">回到主页</button>
     </div>
 
     <!-- 自定义模态框 -->
@@ -210,7 +210,6 @@
         document.getElementById('home-btn').addEventListener('click', function () {
             window.location.href = '/';
         });
-
         setInterval(updateProgress, 2000);
         updateProgress(); // 初始加载
     </script>

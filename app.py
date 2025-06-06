@@ -8,6 +8,7 @@ import json
 import time
 import secrets
 import config
+import uuid
 
 app = Flask(__name__)
 app.secret_key = config.general.secretkey
@@ -71,24 +72,17 @@ def index():
             a = int(request.form["a"])
             b = int(request.form["b"])
             c = int(request.form["c"])
-            
-            # 生成唯一任务ID
-            task_id = f"{a}-{b}-{c}-{time.time()}"
-            session['task_id'] = task_id
-            
-            # 启动后台线程
-            threading.Thread(
-                target=run_in_background,
-                args=(a, b, c, task_id),
-                daemon=True
-            ).start()
-            
-            # 重定向到等待页面
-            return redirect(url_for("waiting"))
-            
+            return start_task(a,b,c)
         except ValueError:
             return "请输入三个整数！"
     return render_template("index.html", error=False)
+
+@app.route("/retry", methods=["POST"])
+def retry():
+    a = int(request.form["a"])
+    b = int(request.form["b"])
+    c = int(request.form["c"])
+    return start_task(a,b,c)
 
 @app.route("/waiting")
 def waiting():
@@ -128,6 +122,21 @@ def cancel_task():
 
 def should_cancel(task_id):
     return task_cancel_flags.get(task_id,False)
+
+def start_task(a,b,c):
+    # 生成唯一任务ID
+    task_id = f"{a}-{b}-{c}-{str(uuid.uuid4())}"
+    session['task_id'] = task_id
+    
+    # 启动后台线程
+    threading.Thread(
+        target=run_in_background,
+        args=(a, b, c, task_id),
+        daemon=True
+    ).start()
+    
+    # 重定向到等待页面
+    return redirect(url_for("waiting"))
 
 if __name__ == "__main__":
     app.run(debug=False)
