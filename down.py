@@ -134,7 +134,7 @@ def process_single_submission(submission_id, target_contest_id, cache, session):
         return None, 'no_match'
 
 
-def process_submission_range(start_id, end_id, target_contest_id, cache, session, progress_callback):
+def process_submission_range(start_id, end_id, target_contest_id, cache, task_id, session, progress_callback ,should_cancel):
     """
     将提交 ID 按照每 8 个一组并行处理，最后统一计算 404 次数。
     如果累计 404 次数达到 config.down.max_404_count，则提前退出。
@@ -202,11 +202,14 @@ def process_submission_range(start_id, end_id, target_contest_id, cache, session
             if not_found_count <= 0:
                 print("累计 404 次数达到上限，提前终止。")
                 break
+            if should_cancel and should_cancel(task_id):
+                print("用户取消：",task_id)
+                break
 
     return submissions_data
 
 
-def run(start_id, end_id, contest_id, progress_callback=None):
+def run(start_id, end_id, contest_id, task_id, progress_callback=None,should_cancel=None):
     """主运行函数：收集指定比赛范围内的提交数据"""
     # 验证参数有效性
     if start_id < config.down.min_id or start_id > end_id:
@@ -224,7 +227,9 @@ def run(start_id, end_id, contest_id, progress_callback=None):
             target_contest_id=contest_id,
             cache=cache,
             session=session,
-            progress_callback=progress_callback
+            task_id=task_id,
+            progress_callback=progress_callback,
+            should_cancel=should_cancel
         )
     finally:
         # 确保最后发送完成进度

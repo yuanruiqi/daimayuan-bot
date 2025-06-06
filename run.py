@@ -4,9 +4,9 @@ import ren
 import anal
 import config
 
-def run(a, b, c, progress_callback=None):
+def run(a, b, c, task_id, progress_callback=None,should_cancel=None):
     # 1. 获取提交数据
-    submission_data = down.run(a, b, c, progress_callback)
+    submission_data = down.run(a, b, c, task_id, progress_callback,should_cancel)
     
     # 2. 分析数据生成DataFrame
     df, name_order = anal.run(submission_data)
