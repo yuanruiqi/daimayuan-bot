@@ -48,20 +48,28 @@
             font-size: 14px;
             color: #777;
         }
-        .cancel-btn {
+        .cancel-btn, .home-btn {
             display: block;
-            margin: 30px auto 0;
+            margin: 20px auto 0;
             padding: 12px 30px;
-            background-color: #e74c3c;
-            color: white;
             border: none;
             border-radius: 6px;
             font-size: 16px;
             cursor: pointer;
             transition: background-color 0.3s;
+            color: white;
+        }
+        .cancel-btn {
+            background-color: #e74c3c;
         }
         .cancel-btn:hover {
             background-color: #c0392b;
+        }
+        .home-btn {
+            background-color: #3498db;
+        }
+        .home-btn:hover {
+            background-color: #2980b9;
         }
 
         /* 模态框样式 */
@@ -77,7 +85,6 @@
             justify-content: center;
             z-index: 1000;
         }
-
         #confirm-modal .modal-content {
             background: white;
             padding: 30px;
@@ -87,16 +94,13 @@
             text-align: center;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
         }
-
         #confirm-modal .modal-content p {
             font-size: 16px;
             color: #333;
         }
-
         #confirm-modal .modal-buttons {
             margin-top: 20px;
         }
-
         #confirm-modal button {
             padding: 10px 20px;
             margin: 0 10px;
@@ -105,12 +109,10 @@
             font-size: 14px;
             cursor: pointer;
         }
-
         #confirm-yes {
             background-color: #e74c3c;
             color: white;
         }
-
         #confirm-no {
             background-color: #bdc3c7;
             color: white;
@@ -129,7 +131,9 @@
         </div>
 
         <div class="info-text" id="info-text">请耐心等待，这可能需要一些时间...</div>
+
         <button id="cancel-btn" class="cancel-btn">取消任务</button>
+        <button id="home-btn" class="home-btn">回到主页</button>
     </div>
 
     <!-- 自定义模态框 -->
@@ -153,11 +157,12 @@
 
                     document.getElementById('progress-fill').style.width = progress + '%';
 
-                    if (status != 'running') {
+                    if (status !== 'running') {
                         document.getElementById('cancel-btn').style.display = 'none';
-                    }
-                    else{
+                        document.getElementById('home-btn').style.display = '';
+                    } else {
                         document.getElementById('cancel-btn').style.display = '';
+                        document.getElementById('home-btn').style.display = 'none';
                     }
 
                     if (status === 'completed') {
@@ -170,9 +175,9 @@
                     } else if (status === 'error') {
                         document.getElementById('status-text').textContent = '处理出错！';
                         document.getElementById('info-text').textContent = data.error || '未知错误';
-                    } else if(status === 'cancelled'){
+                    } else if (status === 'cancelled') {
                         document.getElementById('status-text').textContent = '已取消';
-                    }else{
+                    } else {
                         document.getElementById('status-text').textContent = '等待任务开始...';
                     }
                 });
@@ -200,6 +205,10 @@
 
         document.getElementById('confirm-no').addEventListener('click', function () {
             document.getElementById('confirm-modal').style.display = 'none';
+        });
+
+        document.getElementById('home-btn').addEventListener('click', function () {
+            window.location.href = '/';
         });
 
         setInterval(updateProgress, 2000);
