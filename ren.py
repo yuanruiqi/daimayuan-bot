@@ -4,8 +4,6 @@ from jinja2 import Template
 import config
 
 def run(df, startid, endid, cid):
-    # if df.empty:
-    #     return ""
 
     df = prepare_data(df)
     df_sorted = sort_and_rank(df)
@@ -66,6 +64,3 @@ def add_cell_coloring(html, df_sorted):
                     continue
     return str(soup)
 
-# def save_html(html, html_file):
-#     with open(html_file, 'w', encoding='utf-8') as f:
-#         f.write(html)

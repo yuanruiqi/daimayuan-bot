@@ -185,7 +185,6 @@ def process_submission_range(start_id, end_id, target_contest_id, cache, session
                     # 如果单个任务抛异常，视为一般错误
                     print(f"提交 {submission_id} 处理失败: {e}")
                     continue
-
                 if status == 'not_found':
                     batch_not_found += 1
                     print(f"提交 {submission_id}: 404 (本批次累计 404={batch_not_found})")
