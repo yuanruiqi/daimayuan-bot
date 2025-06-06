@@ -17,11 +17,12 @@ html = {}
 task_cancel_flags = {}
 
 def pop(id):
-    task_progress.pop(id, None)
-    html.pop(id, None)
-
-def pop_task(id):
-    task_cancel_flags.pop(id, None)
+    if id in task_progress:
+        task_progress.pop(id, None)
+    if id in html:
+        html.pop(id, None)
+    if id in task_cancel_flags:
+        task_cancel_flags.pop(id, None)
 
 def run_in_background(a, b, c, task_id):
     try:
@@ -35,13 +36,14 @@ def run_in_background(a, b, c, task_id):
         }
         
         # 运行爬取任务
-        html[task_id] = run(a, b, c, task_id, update_progress_callback(task_id),should_cancel)
+        res = run(a, b, c, task_id, update_progress_callback(task_id),should_cancel)
         if task_cancel_flags.get(task_id,False):
-            # 标记任务完成
+            # 标记任务取消
             task_progress[task_id]["status"] = "cancelled"
             task_progress[task_id]["progress"] = 0
         else:
             # 标记任务完成
+            html[task_id] = res
             task_progress[task_id]["status"] = "completed"
             task_progress[task_id]["progress"] = 100
     except Exception as e:
@@ -121,8 +123,6 @@ def cancel_task():
     
     # 设置取消标志
     task_cancel_flags[task_id] = True
-    # timeout*bench是单次执行极限
-    threading.Timer(config.down.batch_size*config.down.timeout+5,lambda:pop_task(task_id)).start()
 
     return jsonify(success=True, message="任务取消请求已发送")
 

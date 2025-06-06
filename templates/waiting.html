@@ -153,6 +153,13 @@
 
                     document.getElementById('progress-fill').style.width = progress + '%';
 
+                    if (status != 'running') {
+                        document.getElementById('cancel-btn').style.display = 'none';
+                    }
+                    else{
+                        document.getElementById('cancel-btn').style.display = '';
+                    }
+
                     if (status === 'completed') {
                         window.location.href = '/result';
                     } else if (status === 'running') {
