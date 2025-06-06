@@ -134,6 +134,13 @@
 
         <button id="cancel-btn" class="cancel-btn">取消任务</button>
         <button id="home-btn" class="home-btn" style="display: none;">回到主页</button>
+        
+        
+        <div style="text-align: center; margin-top: 20px;">
+            <a href="/tasklist" style="color: #007BFF; text-decoration: none;">
+                查看其他任务
+            </a>
+        </div>
     </div>
 
     <!-- 自定义模态框 -->
@@ -146,6 +153,7 @@
             </div>
         </div>
     </div>
+    
 
     <script>
         function updateProgress() {
@@ -210,7 +218,7 @@
         document.getElementById('home-btn').addEventListener('click', function () {
             window.location.href = '/';
         });
-        setInterval(updateProgress, 2000);
+        setInterval(updateProgress, 1000);
         updateProgress(); // 初始加载
     </script>
 </body>

@@ -9,6 +9,7 @@ import time
 import secrets
 import config
 import uuid
+import pandas
 
 app = Flask(__name__)
 app.secret_key = config.general.secretkey
@@ -27,13 +28,16 @@ def pop(id):
 
 def run_in_background(start_id, end_id, cid, task_id):
     try:
+        
         # 初始化进度
         task_progress[task_id] = {
             "progress": 0,
             "status": "running",
             "current": start_id,
             "start": start_id,
-            "end": end_id
+            "end": end_id,
+            "createtime":time.time(),
+            "donetime":1e18
         }
         
         # 运行爬取任务
@@ -47,13 +51,14 @@ def run_in_background(start_id, end_id, cid, task_id):
             html[task_id] = res
             task_progress[task_id]["status"] = "completed"
             task_progress[task_id]["progress"] = 100
+        task_progress[task_id]["donetime"] = time.time()
     except Exception as e:
         print(f"后台任务出错: {e}")
         task_progress[task_id]["status"] = "error"
         task_progress[task_id]["error"] = str(e)
     finally:
         # 10 分钟后清理进度数据
-        threading.Timer(600, lambda: pop(task_id)).start()
+        threading.Timer(config.task.savetime, lambda: pop(task_id)).start()
 
 def update_progress_callback(task_id):
     def callback(current, total, current_id):
@@ -80,7 +85,6 @@ def index():
 @app.route("/retry", methods=["POST"])
 def retry():
     try:
-        
         start_id = int(request.form["start_id"])
         end_id = int(request.form["end_id"])
         cid = int(request.form["cid"])
@@ -108,6 +112,35 @@ def result():
         return render_template_string(html[task_id])
     else:
         abort(404)
+
+# 在已有路由后添加新路由
+@app.route("/tasklist")
+def task_list():
+    """显示所有存在的任务列表"""
+    tasks = []
+    for task_id in task_progress.keys():
+        progress = task_progress[task_id]
+        tasks.append({
+            "id": task_id,
+            "status": progress["status"],
+            "progress": progress["progress"],
+            "start": progress["start"],
+            "end": progress["end"],
+            "current": progress["current"],
+            "remaining":round(config.task.savetime-(time.time()-progress["donetime"]),2)
+        })
+    tasks.sort(key=lambda x: x["remaining"], reverse=True)
+    return render_template("tasklist.html", tasks=tasks,tottime=config.task.savetime)
+
+@app.route("/selecttask", methods=["POST"])
+def select_task():
+    """选择任务并设置session"""
+    task_id = request.form.get("task_id")
+    if task_id not in task_progress:
+        abort(404)
+    
+    session['task_id'] = task_id
+    return redirect(url_for("waiting"))
 
 @app.errorhandler(404)
 def show_404_page(e):
