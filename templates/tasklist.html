@@ -169,6 +169,7 @@
                         <th>状态</th>
                         <th>扫描范围</th>
                         <th>进度</th>
+                        <th>剩余存在时间</th>
                         <th>操作</th>
                     </tr>
                 </thead>
@@ -188,6 +189,12 @@
                                 {{ task.progress }}%
                                 <div class="progress-container">
                                     <div class="progress-bar" style="width: {{ task.progress }}%;"></div>
+                                </div>
+                            </td>
+                            <td>
+                                {{ ([0, task.remaining, tottime] | sort )[1] }}s
+                                <div class="progress-container">
+                                    <div class="progress-bar" style="width: {{ ([0, (task.remaining / tottime * 100), 100] | sort) [1]}}%;"></div>
                                 </div>
                             </td>
                             <td>

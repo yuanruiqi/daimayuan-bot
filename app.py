@@ -28,13 +28,16 @@ def pop(id):
 
 def run_in_background(start_id, end_id, cid, task_id):
     try:
+        
         # 初始化进度
         task_progress[task_id] = {
             "progress": 0,
             "status": "running",
             "current": start_id,
             "start": start_id,
-            "end": end_id
+            "end": end_id,
+            "createtime":time.time(),
+            "donetime":1e18
         }
         
         # 运行爬取任务
@@ -48,13 +51,14 @@ def run_in_background(start_id, end_id, cid, task_id):
             html[task_id] = res
             task_progress[task_id]["status"] = "completed"
             task_progress[task_id]["progress"] = 100
+        task_progress[task_id]["donetime"] = time.time()
     except Exception as e:
         print(f"后台任务出错: {e}")
         task_progress[task_id]["status"] = "error"
         task_progress[task_id]["error"] = str(e)
     finally:
         # 10 分钟后清理进度数据
-        threading.Timer(600, lambda: pop(task_id)).start()
+        threading.Timer(config.task.savetime, lambda: pop(task_id)).start()
 
 def update_progress_callback(task_id):
     def callback(current, total, current_id):
@@ -81,7 +85,6 @@ def index():
 @app.route("/retry", methods=["POST"])
 def retry():
     try:
-        
         start_id = int(request.form["start_id"])
         end_id = int(request.form["end_id"])
         cid = int(request.form["cid"])
@@ -123,9 +126,11 @@ def task_list():
             "progress": progress["progress"],
             "start": progress["start"],
             "end": progress["end"],
-            "current": progress["current"]
+            "current": progress["current"],
+            "remaining":round(config.task.savetime-(time.time()-progress["donetime"]),2)
         })
-    return render_template("tasklist.html", tasks=tasks)
+    tasks.sort(key=lambda x: x["remaining"], reverse=True)
+    return render_template("tasklist.html", tasks=tasks,tottime=config.task.savetime)
 
 @app.route("/selecttask", methods=["POST"])
 def select_task():

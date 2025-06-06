@@ -36,3 +36,6 @@ class down:
 
 class anal:
     pass
+
+class task:
+    savetime=600#秒
