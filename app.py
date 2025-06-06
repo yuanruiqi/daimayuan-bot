@@ -25,19 +25,19 @@ def pop(id):
     if id in task_cancel_flags:
         task_cancel_flags.pop(id, None)
 
-def run_in_background(a, b, c, task_id):
+def run_in_background(start_id, end_id, cid, task_id):
     try:
         # 初始化进度
         task_progress[task_id] = {
             "progress": 0,
             "status": "running",
-            "current": a,
-            "start": a,
-            "end": b
+            "current": start_id,
+            "start": start_id,
+            "end": end_id
         }
         
         # 运行爬取任务
-        res = run(a, b, c, task_id, update_progress_callback(task_id),should_cancel)
+        res = run(start_id, end_id, cid, task_id, update_progress_callback(task_id),should_cancel)
         if task_cancel_flags.get(task_id,False):
             # 标记任务取消
             task_progress[task_id]["status"] = "cancelled"
@@ -69,20 +69,20 @@ def update_progress_callback(task_id):
 def index():
     if request.method == "POST":
         try:
-            a = int(request.form["a"])
-            b = int(request.form["b"])
-            c = int(request.form["c"])
-            return start_task(a,b,c)
+            start_id = int(request.form["start_id"])
+            end_id = int(request.form["end_id"])
+            cid = int(request.form["cid"])
+            return start_task(start_id,end_id,cid)
         except ValueError:
             return "请输入三个整数！"
     return render_template("index.html", error=False)
 
 @app.route("/retry", methods=["POST"])
 def retry():
-    a = int(request.form["a"])
-    b = int(request.form["b"])
-    c = int(request.form["c"])
-    return start_task(a,b,c)
+    start_id = int(request.form["start_id"])
+    end_id = int(request.form["end_id"])
+    cid = int(request.form["cid"])
+    return start_task(start_id,end_id,cid)
 
 @app.route("/waiting")
 def waiting():
@@ -123,15 +123,15 @@ def cancel_task():
 def should_cancel(task_id):
     return task_cancel_flags.get(task_id,False)
 
-def start_task(a,b,c):
+def start_task(start_id,end_id,cid):
     # 生成唯一任务ID
-    task_id = f"{a}-{b}-{c}-{str(uuid.uuid4())}"
+    task_id = f"{start_id}-{end_id}-{cid}-{str(uuid.uuid4())}"
     session['task_id'] = task_id
     
     # 启动后台线程
     threading.Thread(
         target=run_in_background,
-        args=(a, b, c, task_id),
+        args=(start_id, end_id, cid, task_id),
         daemon=True
     ).start()
     
