@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>任务列表 - DMYBOT</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(to right, #e0eafc, #cfdef3);
+            margin: 0;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+        }
+        
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+        }
+        
+        .task-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 30px;
+        }
+        
+        .task-table th,
+        .task-table td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .task-table th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+        }
+        
+        .task-table tr:hover {
+            background-color: #f5f7ff;
+        }
+        
+        .task-id {
+            font-family: monospace;
+            font-size: 14px;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .status-running {
+            background-color: #e6f7ff;
+            color: #1890ff;
+        }
+        
+        .status-completed {
+            background-color: #f6ffed;
+            color: #52c41a;
+        }
+        
+        .status-cancelled {
+            background-color: #fff2e8;
+            color: #fa8c16;
+        }
+        
+        .status-error {
+            background-color: #fff1f0;
+            color: #f5222d;
+        }
+        
+        .progress-container {
+            width: 100%;
+            height: 10px;
+            background-color: #f0f0f0;
+            border-radius: 5px;
+            margin-top: 5px;
+            overflow: hidden;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(to right, #4facfe 0%, #00f2fe 100%);
+            border-radius: 5px;
+        }
+        
+        .action-btn {
+            padding: 8px 15px;
+            background-color: #007BFF;
+            border: none;
+            color: white;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            font-size: 14px;
+        }
+        
+        .action-btn:hover {
+            background-color: #0056b3;
+        }
+        
+        .home-btn {
+            display: block;
+            width: 200px;
+            margin: 30px auto 0;
+            padding: 12px;
+            background-color: #3498db;
+            border: none;
+            color: white;
+            font-size: 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            text-align: center;
+            text-decoration: none;
+            transition: background-color 0.3s;
+        }
+        
+        .home-btn:hover {
+            background-color: #2980b9;
+        }
+        
+        .info-text {
+            text-align: center;
+            color: #777;
+            margin: 20px 0;
+            font-size: 14px;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px 15px;
+            }
+            
+            .task-table th,
+            .task-table td {
+                padding: 8px 10px;
+                font-size: 14px;
+            }
+            
+            .task-id {
+                font-size: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>当前任务列表</h1>
+        
+        {% if tasks %}
+            <table class="task-table">
+                <thead>
+                    <tr>
+                        <th>状态</th>
+                        <th>扫描范围</th>
+                        <th>进度</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for task in tasks %}
+                        <tr>
+                            <td>
+                                <span class="status-badge status-{{ task.status }}">
+                                    {% if task.status == 'running' %}运行中{% endif %}
+                                    {% if task.status == 'completed' %}已完成{% endif %}
+                                    {% if task.status == 'cancelled' %}已取消{% endif %}
+                                    {% if task.status == 'error' %}错误{% endif %}
+                                </span>
+                            </td>
+                            <td>{{ task.start }} - {{ task.end }}</td>
+                            <td>
+                                {{ task.progress }}%
+                                <div class="progress-container">
+                                    <div class="progress-bar" style="width: {{ task.progress }}%;"></div>
+                                </div>
+                            </td>
+                            <td>
+                                <form action="/selecttask" method="POST">
+                                    <input type="hidden" name="task_id" value="{{ task.id }}">
+                                    <button type="submit" class="action-btn">查看任务</button>
+                                </form>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <div class="info-text">当前没有运行中的任务</div>
+        {% endif %}
+        
+        <a href="/" class="home-btn">返回主页</a>
+    </div>
+</body>
+</html>

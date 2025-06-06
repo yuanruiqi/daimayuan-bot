@@ -9,6 +9,7 @@ import time
 import secrets
 import config
 import uuid
+import pandas
 
 app = Flask(__name__)
 app.secret_key = config.general.secretkey
@@ -108,6 +109,33 @@ def result():
         return render_template_string(html[task_id])
     else:
         abort(404)
+
+# 在已有路由后添加新路由
+@app.route("/tasklist")
+def task_list():
+    """显示所有存在的任务列表"""
+    tasks = []
+    for task_id in task_progress.keys():
+        progress = task_progress[task_id]
+        tasks.append({
+            "id": task_id,
+            "status": progress["status"],
+            "progress": progress["progress"],
+            "start": progress["start"],
+            "end": progress["end"],
+            "current": progress["current"]
+        })
+    return render_template("tasklist.html", tasks=tasks)
+
+@app.route("/selecttask", methods=["POST"])
+def select_task():
+    """选择任务并设置session"""
+    task_id = request.form.get("task_id")
+    if task_id not in task_progress:
+        abort(404)
+    
+    session['task_id'] = task_id
+    return redirect(url_for("waiting"))
 
 @app.errorhandler(404)
 def show_404_page(e):
