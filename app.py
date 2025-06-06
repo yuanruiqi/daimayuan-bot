@@ -79,10 +79,15 @@ def index():
 
 @app.route("/retry", methods=["POST"])
 def retry():
-    start_id = int(request.form["start_id"])
-    end_id = int(request.form["end_id"])
-    cid = int(request.form["cid"])
-    return start_task(start_id,end_id,cid)
+    try:
+        
+        start_id = int(request.form["start_id"])
+        end_id = int(request.form["end_id"])
+        cid = int(request.form["cid"])
+    except ValueError:
+        abort(404) #意味着试图hack
+    else:
+        return start_task(start_id,end_id,cid)
 
 @app.route("/waiting")
 def waiting():
@@ -117,7 +122,6 @@ def cancel_task():
     
     # 设置取消标志
     task_cancel_flags[task_id] = True
-
     return jsonify(success=True, message="任务取消请求已发送")
 
 def should_cancel(task_id):
