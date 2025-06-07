@@ -2,7 +2,9 @@ import pandas as pd
 from bs4 import BeautifulSoup
 from jinja2 import Template
 import config
+import logging
 
+logger = logging.getLogger(__name__)
 def run(df, startid, endid, cid):
 
     df = prepare_data(df)
@@ -10,7 +12,7 @@ def run(df, startid, endid, cid):
     table_html = generate_table_html(df_sorted)
     html = build_html(table_html, startid, endid, cid)
     html = add_cell_coloring(html, df_sorted)
-    # print(f"已生成 HTML：{html_file}")
+    logger.info(f"{startid},{endid},{cid},已生成 HTML")
     return html
 
 def prepare_data(df):

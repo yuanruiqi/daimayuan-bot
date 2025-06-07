@@ -1,8 +1,12 @@
 from collections import defaultdict
 import pandas as pd
+import logging
+
+logger = logging.getLogger(__name__)
 
 def run(submission_data):
     if not submission_data:
+        logger.warning("收到空提交数据")
         return pd.DataFrame(), []
     
     # 创建数据结构
@@ -50,5 +54,7 @@ def run(submission_data):
     # 转置DataFrame
     df_transposed = df.set_index('题目').T.reset_index()
     df_transposed.columns = ['用户名'] + list(df_transposed.columns[1:])
+
+    logger.info(f"{len(submission_data)} 条数据分析完成")
     
     return df_transposed, name_list
