@@ -9,7 +9,7 @@
         
         body {
             font-family: 'Inter', sans-serif;
-            background: linear-gradient(to right, #e0eafc, #cfdef3);
+            background: linear-gradient(to right, #e0eafc, #cfdef3);   
             margin: 0;
             padding: 20px;
         }
@@ -82,6 +82,10 @@
         .status-error {
             background-color: #fff1f0;
             color: #f5222d;
+        }
+        .status-paused {
+            background-color: #fff8e1;
+            color: #f731e7;
         }
         
         .progress-container {
@@ -161,8 +165,11 @@
 <body>
     <div class="container">
         <h1>当前任务列表</h1>
+        <a type="submit" href="" id="refresh-btn" class="home-btn" style="margin-bottom: 20px;">刷新任务列表</a>
+        
         
         {% if tasks %}
+
             <table class="task-table">
                 <thead>
                     <tr>
@@ -182,6 +189,7 @@
                                     {% if task.status == 'completed' %}已完成{% endif %}
                                     {% if task.status == 'cancelled' %}已取消{% endif %}
                                     {% if task.status == 'error' %}错误{% endif %}
+                                    {% if task.status == 'paused' %}已暂停{% endif %}
                                 </span>
                             </td>
                             <td>{{ task.start }} - {{ task.end }}</td>
@@ -194,7 +202,7 @@
                             <td>
                                 {{ ([0, task.remaining, tottime] | sort )[1] }}s
                                 <div class="progress-container">
-                                    <div class="progress-bar" style="width: {{ ([0, (task.remaining / tottime * 100), 100] | sort) [1]}}%;"></div>
+                                    <div class="progress-bar" style="width: {{ ([0, (task.remaining / tottime * 100), 100] | sort)[1] }}%;"></div>
                                 </div>
                             </td>
                             <td>
@@ -202,6 +210,12 @@
                                     <input type="hidden" name="task_id" value="{{ task.id }}">
                                     <button type="submit" class="action-btn">查看任务</button>
                                 </form>
+                                {% if task.status == 'paused' %}
+                                <form action="/resume" method="POST">
+                                    <input type="hidden" name="task_id" value="{{ task.id }}">
+                                    <button type="submit" class="action-btn" style="margin-top: 20px;">继续任务</button>
+                                </form>
+                                {% endif %}
                             </td>
                         </tr>
                     {% endfor %}
@@ -211,6 +225,7 @@
             <div class="info-text">当前没有运行中的任务</div>
         {% endif %}
         
+        <!-- 返回主页按钮 -->
         <a href="/" class="home-btn">返回主页</a>
     </div>
 </body>
