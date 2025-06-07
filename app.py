@@ -13,6 +13,8 @@ import config
 import uuid
 import pandas
 from models import SaveDict
+import signal
+import sys
 
 app = Flask(__name__)
 app.secret_key = config.general.secretkey
@@ -49,7 +51,6 @@ task_progress = SaveDict("task_progress","./databuf/task_progress.pkl")
 html = SaveDict("html","./databuf/html.pkl")
 task_cancel_flags = SaveDict("cancel_flags","./databuf/cancel_flags.pkl")
 task_pause_flags = SaveDict("task_pause_flags","./databuf/task_pause_flags.pkl")
-task_pause_events = SaveDict("task_pause_events","./databuf/task_pause_events.pkl")
 
 def pop(id):
     if id in task_progress:
@@ -76,24 +77,26 @@ def run_in_background(start_id, end_id, cid, task_id):
         }
         task_cancel_flags[task_id] = False
 
-        # 初始化暂停事件
-        task_pause_events[task_id] = threading.Event()
-        task_pause_events[task_id].set()  # 初始设置为运行状态
-
         # 运行爬取任务
-        res = run(start_id, end_id, cid, task_id, update_progress_callback(task_id),should_cancel,should_pause,task_pause_events[task_id])
-        if task_cancel_flags.get(task_id,False):
+        status,res = run(start_id, end_id, cid, task_id, update_progress_callback(task_id),should_cancel,should_pause)
+        if status=='cancelled':
             logger.info(f"任务{task_id}已经被成功取消")
             # 标记任务取消
             task_progress[task_id]["status"] = "cancelled"
             task_progress[task_id]["progress"] = 0
-        else:
+            task_progress[task_id]["donetime"] = time.time()
+        elif status=='completed':
             # 标记任务完成
             logger.info(f"任务{task_id}已完成")
             html[task_id] = res
             task_progress[task_id]["status"] = "completed"
             task_progress[task_id]["progress"] = 100
-        task_progress[task_id]["donetime"] = time.time()
+            task_progress[task_id]["donetime"] = time.time()
+        else:
+            # 标记任务完成
+            logger.info(f"任务{task_id}返回状态 {status}")
+            task_progress[task_id]["status"] = "paused"
+            task_progress[task_id]["progress"] = 0
     except Exception as e:
         # print(f"后台任务出错: {e}")
         logger.error(f"后台任务出错: {e}")
@@ -101,8 +104,6 @@ def run_in_background(start_id, end_id, cid, task_id):
         task_progress[task_id]["error"] = str(e)
     finally:
         # 先清理暂停数据
-        if task_id in task_pause_events:
-            task_pause_events.pop(task_id, None)
         if task_id in task_pause_flags:
             task_pause_flags.pop(task_id, None)
         # 10 分钟后清理进度数据
@@ -264,8 +265,6 @@ def resume_task(task_id):
         logger.info(f"用户重启被暂停的任务{task_id}")
         # 清除暂停标志并设置事件
         task_pause_flags[task_id] = False
-        if task_id in task_pause_events:
-            task_pause_events[task_id].set()
         task_progress[task_id]["status"] = "running"
         return jsonify(success=True, message="任务已恢复")
     logger.warning(f"用户试图重启{task_id}，但是状态是{str(task_progress[task_id]["status"])}，不可恢复")
@@ -288,14 +287,15 @@ def should_cancel(task_id):
 def should_pause(task_id):
     return task_pause_flags.get(task_id, False)
 
-def start_task(start_id,end_id,cid,task_id=None):
+def start_task(start_id,end_id,cid,task_id=None,working_outside=False):
     # 生成唯一任务ID
     if not task_id:
         task_id = f"{start_id}-{end_id}-{cid}-{str(uuid.uuid4())}"
         logger.info(f"生成新的{task_id}")
     else:
         logger.info(f"复用task id{task_id}")
-    session['task_id'] = task_id
+    if not working_outside:
+        session['task_id'] = task_id
     
     # 启动后台线程
     threading.Thread(
@@ -303,27 +303,52 @@ def start_task(start_id,end_id,cid,task_id=None):
         args=(start_id, end_id, cid, task_id),
         daemon=True
     ).start()
+    if not working_outside:
+        # 重定向到等待页面
+        return redirect(url_for("waiting"))
+    else:
+        return None
     
-    # 重定向到等待页面
-    return redirect(url_for("waiting"))
-
+timers_outside=[]#在app.run被调用前的 timers 应当被单独存储
 def restart_task():
     deleted_tasks=[]
     for task_id in task_progress.keys():
         try:
             progress = task_progress[task_id]
-            print(progress)
             if progress["status"] == 'running' or progress["status"] == 'paused':
-                start_task(progress["start"],progress["end"],progress["contest_id"],task_id)
+                start_task(progress["start"],progress["end"],progress["contest_id"],task_id,working_outside=False)
             if progress["status"] == 'completed' or progress["status"] == 'cancelled':
-                threading.Timer(max(0,config.task.savetime-max(0,time.time()-progress["donetime"])), lambda: pop(task_id)).start()
+                t=threading.Timer(max(0,config.task.savetime-max(0,time.time()-progress["donetime"])), lambda: pop(task_id))
+                t.start()
+                timers_outside.append(t)
         except Exception as e:
             logging.error(f"恢复任务{task_id}出错，{e}")
             deleted_tasks.append(task_id)
     for task_id in deleted_tasks:
-        pop(deleted_tasks)
+        pop(task_id)
 
+def shutdown(signum, frame):
+    logger.info("收到退出信号，正在清理...")
+    # 取消所有定时器
+    for t in timers_outside:
+        try:
+            t.cancel()
+        except:
+            pass
+    # 关闭 SaveDict，避免析构时 join 卡死
+    for store in (task_progress, html, task_cancel_flags, task_pause_flags):
+        try:
+            store.close()
+        except:
+            pass
+    logger.info("清理完毕，程序退出")
+    sys.exit()
+
+# 捕获 Ctrl+C 和 kill
+signal.signal(signal.SIGINT, shutdown)
+signal.signal(signal.SIGTERM, shutdown)
 
 if __name__ == "__main__":
+    logger.info("qidong")
     restart_task()
     app.run(debug=False)

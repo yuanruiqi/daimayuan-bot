@@ -105,4 +105,4 @@ class SaveDict(MutableMapping):#线程安全&保存
             else:
                 logger.warning(f"{self.name}: Data file does not contain a dict; ignored.")
         except Exception:
-            logger.exception(f"{self.name}: Failed to load data from {self.filepath}.")
+            logger.exception(f"{self.name}: Failed to load data from {self.filepath}.") 
