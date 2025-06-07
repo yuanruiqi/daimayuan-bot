@@ -6,3 +6,4 @@ lock
 __pycache__/*
 cache/*
 logs/*
+databuf/*

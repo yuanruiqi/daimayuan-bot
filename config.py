@@ -46,3 +46,6 @@ class log:
     format = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'  
     max_bytes = 10 * 1024 * 1024  # 10MB 日志文件大小限制
     backup_count = 5  
+
+class models:
+    save_minute=5#分钟
