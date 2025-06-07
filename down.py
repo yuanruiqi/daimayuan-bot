@@ -6,6 +6,9 @@ from urllib3.util.retry import Retry
 import config
 import math
 from concurrent.futures import ThreadPoolExecutor, as_completed
+import logging
+
+logger = logging.getLogger(__name__)
 
 def create_session():
     """创建并配置具有重试机制和连接池的请求会话"""
@@ -68,7 +71,7 @@ def parse_submission_page(html_content, submission_id):
         # 处理编译错误情况
         if 'Compile Error' in str(table):
             return 'CE', -1
-        print(f"解析提交{submission_id}时出错: {e}")
+        logger.info(f"解析提交{submission_id}时出错: {e}")
         return None, None
 
 def fetch_submission(session, submission_id):
@@ -82,7 +85,7 @@ def fetch_submission(session, submission_id):
         )
         return response
     except Exception as e:
-        print(f"请求提交{submission_id}时出错: {e}")
+        logger.info(f"请求提交{submission_id}时出错: {e}")
         return None
 
 def process_single_submission(submission_id, target_contest_id, cache, session):
@@ -115,7 +118,7 @@ def process_single_submission(submission_id, target_contest_id, cache, session):
 
     if response.status_code != 200:
         # 其他非 200 状态码，视为一般错误
-        print(f"提交 {submission_id}: 非预期状态码 {response.status_code}")
+        logger.info(f"提交 {submission_id}: 非预期状态码 {response.status_code}")
         return None, 'error'
 
     # 3. 200 OK，解析页面
@@ -183,33 +186,34 @@ def process_submission_range(start_id, end_id, target_contest_id, cache, task_id
                     data_tuple, status = future.result()
                 except Exception as e:
                     # 如果单个任务抛异常，视为一般错误
-                    print(f"提交 {submission_id} 处理失败: {e}")
+                    logger.warning(f"{task_id} 中提交 {submission_id} 处理失败: {e}")
                     continue
                 if status == 'not_found':
                     batch_not_found += 1
-                    print(f"提交 {submission_id}: 404 (本批次累计 404={batch_not_found})")
+                    logger.info(f"提交 {submission_id}: 404 (本批次累计 404={batch_not_found})")
                 elif status == 'error' or status == 'no_match':
                     # 'error' 和 'no_match' 都不计入 404，也不收集
                     continue
                 else:  # status == 'ok'
                     submissions_data.append(data_tuple)
-                    print(f"有效提交: {submission_id}")
+                    logger.info(f"有效提交: {submission_id}")
 
             # 3. 本批次结束后，统一扣减 not_found_count
             not_found_count -= batch_not_found
             if batch_not_found > 0:
-                print(f"本批次共 {batch_not_found} 次 404，剩余可容忍 404 次数 = {not_found_count}")
+                logger.info(f"{task_id} 中批次共 {batch_not_found} 次 404，剩余可容忍 404 次数 = {not_found_count}")
             if not_found_count <= 0:
-                print("累计 404 次数达到上限，提前终止。")
+                logger.info(f"{task_id} 中累计 404 次数达到上限，提前终止。")
                 break
             if should_cancel and should_cancel(task_id):
-                print("用户取消：",task_id)
+                logger.info(f"{task_id} 中用户取消：")
                 break
             if should_pause and should_pause(task_id):
-                print("用户暂停：",task_id)
+                logger.info(f"{task_id} 中用户暂停：")
                 pause_event.clear()
                 pause_event.wait()
-                print("用户恢复：",task_id)
+                logger.info(f"{task_id} 中用户恢复：")
+    logger.info(f"{task_id} down 完成")
 
     return submissions_data
 
@@ -218,6 +222,7 @@ def run(start_id, end_id, contest_id, task_id, progress_callback=None,should_can
     """主运行函数：收集指定比赛范围内的提交数据"""
     # 验证参数有效性
     if start_id < config.down.min_id or start_id > end_id:
+        logger.warning(f"{task_id}因为不满足条件所以返回空，start={start_id},end={end_id}")
         return []
     
     # 初始化会话和缓存

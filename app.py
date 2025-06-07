@@ -1,5 +1,7 @@
 # app.py
 
+import logging
+from logging.handlers import RotatingFileHandler
 from flask import Flask, request, render_template, render_template_string, redirect, url_for, session, abort,jsonify
 from run import run
 import os
@@ -13,6 +15,29 @@ import pandas
 
 app = Flask(__name__)
 app.secret_key = config.general.secretkey
+
+# 初始化日志系统
+def setup_logger():
+    logger = logging.getLogger()
+    logger.setLevel(config.log.level)
+    
+    # 创建文件处理器
+    file_handler = RotatingFileHandler(
+        config.log.file,
+        maxBytes=config.log.max_bytes,
+        backupCount=config.log.backup_count
+    )
+    file_handler.setFormatter(logging.Formatter(config.log.format))
+    
+    # 添加到logger
+    logger.addHandler(file_handler)
+    return logger
+
+# 在创建Flask应用后初始化日志
+logger = setup_logger()
+app.logger.handlers = logger.handlers
+app.logger.setLevel(logger.level)
+
 # 用于存储所有任务的进度
 task_progress = {}
 html = {}
@@ -27,10 +52,11 @@ def pop(id):
         html.pop(id, None)
     if id in task_cancel_flags:
         task_cancel_flags.pop(id, None)
+    logger.info(f"任务{id}被删除")
 
 def run_in_background(start_id, end_id, cid, task_id):
     try:
-        print(task_id)
+        logger.info(f"启动后台任务: {task_id} | {start_id}-{end_id} | cid={cid}")
         # 初始化进度
         task_progress[task_id] = {
             "progress": 0,
@@ -51,17 +77,20 @@ def run_in_background(start_id, end_id, cid, task_id):
         # 运行爬取任务
         res = run(start_id, end_id, cid, task_id, update_progress_callback(task_id),should_cancel,should_pause,task_pause_events[task_id])
         if task_cancel_flags.get(task_id,False):
+            logger.info(f"任务{task_id}已经被成功取消")
             # 标记任务取消
             task_progress[task_id]["status"] = "cancelled"
             task_progress[task_id]["progress"] = 0
         else:
             # 标记任务完成
+            logger.info(f"任务{task_id}已完成")
             html[task_id] = res
             task_progress[task_id]["status"] = "completed"
             task_progress[task_id]["progress"] = 100
         task_progress[task_id]["donetime"] = time.time()
     except Exception as e:
-        print(f"后台任务出错: {e}")
+        # print(f"后台任务出错: {e}")
+        logger.error(f"后台任务出错: {e}")
         task_progress[task_id]["status"] = "error"
         task_progress[task_id]["error"] = str(e)
     finally:
@@ -183,7 +212,9 @@ def cancel_task():
     """取消当前用户的任务"""
     task_id = session.get('task_id')
     if not task_id:
+        logger.waring(f"用户试图取消任务但失败: {task_id}")
         return jsonify(success=False, message="未找到任务ID")
+    logger.info(f"用户取消任务: {task_id}")
     
     # 设置取消标志
     task_cancel_flags[task_id] = True
@@ -195,6 +226,7 @@ def pause_task_session():
     """暂停当前用户的任务"""
     task_id = session.get('task_id')
     if not task_id:
+        logger.waring(f"用户试图暂停任务但是无session")
         return jsonify(success=False, message="未找到任务ID")
     return pause_task(task_id)
 
@@ -203,6 +235,7 @@ def resume_task_session():
     """恢复当前用户的任务"""
     task_id = session.get('task_id')
     if not task_id:
+        logger.waring(f"用户试图恢复任务但是无session")
         return jsonify(success=False, message="未找到任务ID")
     return resume_task(task_id)
 
@@ -211,30 +244,37 @@ def resume_task_session():
 def resume_task(task_id):
     # 如果已经取消，新设置任务
     if not task_id or task_id not in task_progress:
+        logger.warning(f"用户试图重启任务，但task_id不存在")
         return jsonify(success=False, message="任务不存在")
     if task_progress[task_id]["status"] == "cancelled":
+        logger.info(f"用户重启被取消的任务{task_id}")
         start,end,cid=task_progress[task_id]["start"],task_progress[task_id]["end"],task_progress[task_id]["contest_id"]
         start_task(start,end,cid,task_id)
         return jsonify(success=True, message="任务已重启")
     if task_progress[task_id]["status"] == 'paused':
+        logger.info(f"用户重启被暂停的任务{task_id}")
         # 清除暂停标志并设置事件
         task_pause_flags[task_id] = False
         if task_id in task_pause_events:
             task_pause_events[task_id].set()
         task_progress[task_id]["status"] = "running"
         return jsonify(success=True, message="任务已恢复")
+    logger.warning(f"用户试图重启{task_id}，但是状态是{str(task_progress[task_id]["status"])}，不可恢复")
     return jsonify(success=False, message="非可恢复状态"+str(task_progress[task_id]["status"]))
 
 @app.route("/api/task/<task_id>/pause", methods=["POST"])
 def pause_task(task_id):
     # 设置暂停标志
+    if not task_id:
+        logger.warning(f"用户试图暂停任务，但task_id不存在")
+        return jsonify(success=False, message="task id不存在")
+    logger.info(f"用户暂停任务: {task_id}")
     task_pause_flags[task_id] = True
     task_progress[task_id]["status"] = "paused"
     return jsonify(success=True, message="任务已暂停")
     
 
 def should_cancel(task_id):
-    print(task_cancel_flags.get(task_id,False))
     return task_cancel_flags.get(task_id,False)
 
 def should_pause(task_id):
@@ -244,6 +284,9 @@ def start_task(start_id,end_id,cid,task_id=None):
     # 生成唯一任务ID
     if not task_id:
         task_id = f"{start_id}-{end_id}-{cid}-{str(uuid.uuid4())}"
+        logger.info(f"生成新的{task_id}")
+    else:
+        logger.info(f"复用task id{task_id}")
     session['task_id'] = task_id
     
     # 启动后台线程

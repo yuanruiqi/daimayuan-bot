@@ -5,3 +5,4 @@ cache.json
 lock
 __pycache__/*
 cache/*
+logs/*
