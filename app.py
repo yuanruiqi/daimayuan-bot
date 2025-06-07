@@ -312,9 +312,10 @@ def restart_task():
     for task_id in task_progress.keys():
         try:
             progress = task_progress[task_id]
-            if progress["progress"] == 'running' or progress["progress"] == 'paused':
+            print(progress)
+            if progress["status"] == 'running' or progress["status"] == 'paused':
                 start_task(progress["start"],progress["end"],progress["contest_id"],task_id)
-            if progress["progress"] == 'completed' or progress["progress"] == 'cancelled':
+            if progress["status"] == 'completed' or progress["status"] == 'cancelled':
                 threading.Timer(max(0,config.task.savetime-max(0,time.time()-progress["donetime"])), lambda: pop(task_id)).start()
         except Exception as e:
             logging.error(f"恢复任务{task_id}出错，{e}")
