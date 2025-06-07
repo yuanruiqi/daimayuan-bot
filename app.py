@@ -207,7 +207,7 @@ def resume_task_session():
     return resume_task(task_id)
 
 # 添加任务操作路由
-@app.route("/api/task/<task_id>/pause", methods=["POST"])
+@app.route("/api/task/<task_id>/resume", methods=["POST"])
 def resume_task(task_id):
     # 如果已经取消，新设置任务
     if not task_id or task_id not in task_progress:
@@ -225,7 +225,7 @@ def resume_task(task_id):
         return jsonify(success=True, message="任务已恢复")
     return jsonify(success=False, message="非可恢复状态"+str(task_progress[task_id]["status"]))
 
-@app.route("/api/task/<task_id>/resume", methods=["POST"])
+@app.route("/api/task/<task_id>/pause", methods=["POST"])
 def pause_task(task_id):
     # 设置暂停标志
     task_pause_flags[task_id] = True
