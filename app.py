@@ -17,6 +17,8 @@ app.secret_key = config.general.secretkey
 task_progress = {}
 html = {}
 task_cancel_flags = {}
+task_pause_flags = {}
+task_pause_events = {}
 
 def pop(id):
     if id in task_progress:
@@ -28,7 +30,7 @@ def pop(id):
 
 def run_in_background(start_id, end_id, cid, task_id):
     try:
-        
+        print(task_id)
         # 初始化进度
         task_progress[task_id] = {
             "progress": 0,
@@ -36,12 +38,18 @@ def run_in_background(start_id, end_id, cid, task_id):
             "current": start_id,
             "start": start_id,
             "end": end_id,
+            "contest_id": cid,
             "createtime":time.time(),
             "donetime":1e18
         }
-        
+        task_cancel_flags[task_id] = False
+
+        # 初始化暂停事件
+        task_pause_events[task_id] = threading.Event()
+        task_pause_events[task_id].set()  # 初始设置为运行状态
+
         # 运行爬取任务
-        res = run(start_id, end_id, cid, task_id, update_progress_callback(task_id),should_cancel)
+        res = run(start_id, end_id, cid, task_id, update_progress_callback(task_id),should_cancel,should_pause,task_pause_events[task_id])
         if task_cancel_flags.get(task_id,False):
             # 标记任务取消
             task_progress[task_id]["status"] = "cancelled"
@@ -57,6 +65,11 @@ def run_in_background(start_id, end_id, cid, task_id):
         task_progress[task_id]["status"] = "error"
         task_progress[task_id]["error"] = str(e)
     finally:
+        # 先清理暂停数据
+        if task_id in task_pause_events:
+            task_pause_events.pop(task_id, None)
+        if task_id in task_pause_flags:
+            task_pause_flags.pop(task_id, None)
         # 10 分钟后清理进度数据
         threading.Timer(config.task.savetime, lambda: pop(task_id)).start()
 
@@ -127,10 +140,29 @@ def task_list():
             "start": progress["start"],
             "end": progress["end"],
             "current": progress["current"],
-            "remaining":round(config.task.savetime-(time.time()-progress["donetime"]),2)
+            "remaining": round(config.task.savetime - (time.time() - progress["donetime"]), 2)
         })
     tasks.sort(key=lambda x: x["remaining"], reverse=True)
-    return render_template("tasklist.html", tasks=tasks,tottime=config.task.savetime)
+    return render_template("tasklist.html", tasks=tasks, tottime=config.task.savetime)
+
+# 添加API路由获取任务数据
+@app.route("/api/tasks")
+def get_tasks():
+    tasks = []
+    for task_id in task_progress.keys():
+        progress = task_progress[task_id]
+        tasks.append({
+            "id": task_id,
+            "status": progress["status"],
+            "progress": progress["progress"],
+            "start": progress["start"],
+            "end": progress["end"],
+            "current": progress["current"],
+            "contest_id": progress["contest_id"],
+            "remaining": round(config.task.savetime - (time.time() - progress["donetime"]), 2)
+        })
+    tasks.sort(key=lambda x: x["remaining"], reverse=True)
+    return jsonify(tasks=tasks, tottime=config.task.savetime)
 
 @app.route("/selecttask", methods=["POST"])
 def select_task():
@@ -157,12 +189,61 @@ def cancel_task():
     task_cancel_flags[task_id] = True
     return jsonify(success=True, message="任务取消请求已发送")
 
+# 添加暂停和恢复路由
+@app.route("/pause", methods=["POST"])
+def pause_task_session():
+    """暂停当前用户的任务"""
+    task_id = session.get('task_id')
+    if not task_id:
+        return jsonify(success=False, message="未找到任务ID")
+    return pause_task(task_id)
+
+@app.route("/resume", methods=["POST"])
+def resume_task_session():
+    """恢复当前用户的任务"""
+    task_id = session.get('task_id')
+    if not task_id:
+        return jsonify(success=False, message="未找到任务ID")
+    return resume_task(task_id)
+
+# 添加任务操作路由
+@app.route("/api/task/<task_id>/pause", methods=["POST"])
+def resume_task(task_id):
+    # 如果已经取消，新设置任务
+    if not task_id or task_id not in task_progress:
+        return jsonify(success=False, message="任务不存在")
+    if task_progress[task_id]["status"] == "cancelled":
+        start,end,cid=task_progress[task_id]["start"],task_progress[task_id]["end"],task_progress[task_id]["contest_id"]
+        start_task(start,end,cid,task_id)
+        return jsonify(success=True, message="任务已重启")
+    if task_progress[task_id]["status"] == 'paused':
+        # 清除暂停标志并设置事件
+        task_pause_flags[task_id] = False
+        if task_id in task_pause_events:
+            task_pause_events[task_id].set()
+        task_progress[task_id]["status"] = "running"
+        return jsonify(success=True, message="任务已恢复")
+    return jsonify(success=False, message="非可恢复状态"+str(task_progress[task_id]["status"]))
+
+@app.route("/api/task/<task_id>/resume", methods=["POST"])
+def pause_task(task_id):
+    # 设置暂停标志
+    task_pause_flags[task_id] = True
+    task_progress[task_id]["status"] = "paused"
+    return jsonify(success=True, message="任务已暂停")
+    
+
 def should_cancel(task_id):
+    print(task_cancel_flags.get(task_id,False))
     return task_cancel_flags.get(task_id,False)
 
-def start_task(start_id,end_id,cid):
+def should_pause(task_id):
+    return task_pause_flags.get(task_id, False)
+
+def start_task(start_id,end_id,cid,task_id=None):
     # 生成唯一任务ID
-    task_id = f"{start_id}-{end_id}-{cid}-{str(uuid.uuid4())}"
+    if not task_id:
+        task_id = f"{start_id}-{end_id}-{cid}-{str(uuid.uuid4())}"
     session['task_id'] = task_id
     
     # 启动后台线程

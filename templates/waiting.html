@@ -48,7 +48,7 @@
             font-size: 14px;
             color: #777;
         }
-        .cancel-btn, .home-btn {
+        .cancel-btn, .home-btn ,.pause-btn,.resume-btn{
             display: block;
             margin: 20px auto 0;
             padding: 12px 30px;
@@ -70,6 +70,18 @@
         }
         .home-btn:hover {
             background-color: #2980b9;
+        }
+        .pause-btn {
+            background-color: #f39c12;
+        }
+        .pause-btn:hover {
+            background-color: #e67e22;
+        }
+        .resume-btn {
+            background-color: #2ecc71;
+        }
+        .resume-btn:hover {
+            background-color: #27ae60;
         }
 
         /* 模态框样式 */
@@ -134,6 +146,9 @@
 
         <button id="cancel-btn" class="cancel-btn">取消任务</button>
         <button id="home-btn" class="home-btn" style="display: none;">回到主页</button>
+        <!-- 在取消按钮后添加暂停按钮 -->
+        <button id="pause-btn" class="pause-btn" style="display: none;">暂停任务</button>
+        <button id="resume-btn" class="resume-btn" style="display: none">恢复任务</button>
         
         
         <div style="text-align: center; margin-top: 20px;">
@@ -172,6 +187,18 @@
                         document.getElementById('cancel-btn').style.display = '';
                         document.getElementById('home-btn').style.display = 'none';
                     }
+                    
+                    // 处理暂停状态
+                    if(data.status=='not_started'){
+                        document.getElementById('pause-btn').style.display = 'none';
+                        document.getElementById('resume-btn').style.display = 'none';
+                    }else if (data.status === 'paused' || data.status ==='cancelled') {
+                        document.getElementById('pause-btn').style.display = 'none';
+                        document.getElementById('resume-btn').style.display = '';
+                    } else {
+                        document.getElementById('pause-btn').style.display = '';
+                        document.getElementById('resume-btn').style.display = 'none';
+                    }
 
                     if (status === 'completed') {
                         window.location.href = '/result';
@@ -185,9 +212,12 @@
                         document.getElementById('info-text').textContent = data.error || '未知错误';
                     } else if (status === 'cancelled') {
                         document.getElementById('status-text').textContent = '已取消';
-                    } else {
+                    } else if(status === 'paused'){
+                        document.getElementById('status-text').textContent='已暂停';
+                    }else {
                         document.getElementById('status-text').textContent = '等待任务开始...';
                     }
+                    
                 });
         }
 
@@ -217,6 +247,40 @@
 
         document.getElementById('home-btn').addEventListener('click', function () {
             window.location.href = '/';
+        });
+        
+        document.getElementById('pause-btn').addEventListener('click', function () {
+            fetch('/pause', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('任务已暂停');
+                } else {
+                    alert('暂停失败: ' + data.message);
+                }
+            });
+        });
+        // 恢复按钮事件
+        document.getElementById('resume-btn').addEventListener('click', function() {
+            fetch('/resume', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'}
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('pause-btn').style.display = '';
+                    document.getElementById('resume-btn').style.display = 'none';
+                    document.getElementById('status-text').textContent = '恢复中...';
+                } else {
+                    alert('恢复失败: ' + data.message);
+                }
+            });
         });
         setInterval(updateProgress, 1000);
         updateProgress(); // 初始加载
