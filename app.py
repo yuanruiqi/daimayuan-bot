@@ -140,10 +140,29 @@ def task_list():
             "start": progress["start"],
             "end": progress["end"],
             "current": progress["current"],
-            "remaining":round(config.task.savetime-(time.time()-progress["donetime"]),2)
+            "remaining": round(config.task.savetime - (time.time() - progress["donetime"]), 2)
         })
     tasks.sort(key=lambda x: x["remaining"], reverse=True)
-    return render_template("tasklist.html", tasks=tasks,tottime=config.task.savetime)
+    return render_template("tasklist.html", tasks=tasks, tottime=config.task.savetime)
+
+# 添加API路由获取任务数据
+@app.route("/api/tasks")
+def get_tasks():
+    tasks = []
+    for task_id in task_progress.keys():
+        progress = task_progress[task_id]
+        tasks.append({
+            "id": task_id,
+            "status": progress["status"],
+            "progress": progress["progress"],
+            "start": progress["start"],
+            "end": progress["end"],
+            "current": progress["current"],
+            "contest_id": progress["contest_id"],
+            "remaining": round(config.task.savetime - (time.time() - progress["donetime"]), 2)
+        })
+    tasks.sort(key=lambda x: x["remaining"], reverse=True)
+    return jsonify(tasks=tasks, tottime=config.task.savetime)
 
 @app.route("/selecttask", methods=["POST"])
 def select_task():
@@ -172,23 +191,24 @@ def cancel_task():
 
 # 添加暂停和恢复路由
 @app.route("/pause", methods=["POST"])
-def pause_task():
+def pause_task_session():
     """暂停当前用户的任务"""
     task_id = session.get('task_id')
     if not task_id:
         return jsonify(success=False, message="未找到任务ID")
-    
-    # 设置暂停标志
-    task_pause_flags[task_id] = True
-    task_progress[task_id]["status"] = "paused"
-    return jsonify(success=True, message="任务已暂停")
+    return pause_task(task_id)
 
 @app.route("/resume", methods=["POST"])
-def resume_task():
+def resume_task_session():
     """恢复当前用户的任务"""
     task_id = session.get('task_id')
     if not task_id:
         return jsonify(success=False, message="未找到任务ID")
+    return resume_task(task_id)
+
+# 添加任务操作路由
+@app.route("/api/task/<task_id>/pause", methods=["POST"])
+def resume_task(task_id):
     # 如果已经取消，新设置任务
     if not task_id or task_id not in task_progress:
         return jsonify(success=False, message="任务不存在")
@@ -204,6 +224,13 @@ def resume_task():
         task_progress[task_id]["status"] = "running"
         return jsonify(success=True, message="任务已恢复")
     return jsonify(success=False, message="非可恢复状态"+str(task_progress[task_id]["status"]))
+
+@app.route("/api/task/<task_id>/resume", methods=["POST"])
+def pause_task(task_id):
+    # 设置暂停标志
+    task_pause_flags[task_id] = True
+    task_progress[task_id]["status"] = "paused"
+    return jsonify(success=True, message="任务已暂停")
     
 
 def should_cancel(task_id):
