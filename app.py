@@ -12,6 +12,7 @@ import secrets
 import config
 import uuid
 import pandas
+from models import SaveDict
 
 app = Flask(__name__)
 app.secret_key = config.general.secretkey
@@ -39,11 +40,16 @@ app.logger.handlers = logger.handlers
 app.logger.setLevel(logger.level)
 
 # 用于存储所有任务的进度
-task_progress = {}
-html = {}
-task_cancel_flags = {}
-task_pause_flags = {}
-task_pause_events = {}
+# task_progress = {}
+# html = {}
+# task_cancel_flags = {}
+# task_pause_flags = {}
+# task_pause_events = {}
+task_progress = SaveDict("task_progress","./databuf/task_progress.pkl")
+html = SaveDict("html","./databuf/html.pkl")
+task_cancel_flags = SaveDict("cancel_flags","./databuf/cancel_flags.pkl")
+task_pause_flags = SaveDict("task_pause_flags","./databuf/task_pause_flags.pkl")
+task_pause_events = SaveDict("task_pause_events","./databuf/task_pause_events.pkl")
 
 def pop(id):
     if id in task_progress:
@@ -151,8 +157,10 @@ def result():
     # 直接读取生成的 out.html
     task_id = session.get('task_id')
     if task_id and task_id in html:
+        logger.info(f"有用户试图访问任务 {task_id}")
         return render_template_string(html[task_id])
     else:
+        logger.info(f"有用户试图访问result，但是任务不存在或者没完成")
         abort(404)
 
 # 在已有路由后添加新路由
@@ -172,6 +180,7 @@ def task_list():
             "remaining": round(config.task.savetime - (time.time() - progress["donetime"]), 2)
         })
     tasks.sort(key=lambda x: x["remaining"], reverse=True)
+    logger.info(f"有用户试图访问tasklist，共{len(tasks)} 个数据")
     return render_template("tasklist.html", tasks=tasks, tottime=config.task.savetime)
 
 # 添加API路由获取任务数据
@@ -273,7 +282,6 @@ def pause_task(task_id):
     task_progress[task_id]["status"] = "paused"
     return jsonify(success=True, message="任务已暂停")
     
-
 def should_cancel(task_id):
     return task_cancel_flags.get(task_id,False)
 
@@ -299,5 +307,22 @@ def start_task(start_id,end_id,cid,task_id=None):
     # 重定向到等待页面
     return redirect(url_for("waiting"))
 
+def restart_task():
+    deleted_tasks=[]
+    for task_id in task_progress.keys():
+        try:
+            progress = task_progress[task_id]
+            if progress["progress"] == 'running' or progress["progress"] == 'paused':
+                start_task(progress["start"],progress["end"],progress["contest_id"],task_id)
+            if progress["progress"] == 'completed' or progress["progress"] == 'cancelled':
+                threading.Timer(max(0,config.task.savetime-max(0,time.time()-progress["donetime"])), lambda: pop(task_id)).start()
+        except Exception as e:
+            logging.error(f"恢复任务{task_id}出错，{e}")
+            deleted_tasks.append(task_id)
+    for task_id in deleted_tasks:
+        pop(deleted_tasks)
+
+
 if __name__ == "__main__":
+    restart_task()
     app.run(debug=False)
