@@ -15,6 +15,7 @@ import pandas
 from models import SaveDict
 import signal
 import sys
+import atexit
 
 app = Flask(__name__)
 app.secret_key = config.general.secretkey
