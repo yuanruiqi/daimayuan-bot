@@ -1,0 +1,34 @@
+down:
+  headers:
+    User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.93 Safari/537.36
+    Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+    Accept-Language: zh-CN,zh;q=0.9,en;q=0.8
+    Connection: keep-alive
+  cookies:
+    UOJSESSID: ''
+  min_id: 3932620
+  base_url: http://oj.daimayuan.top/submission/
+  max_404_count: 15
+  timeout: 10
+  batch_size: 8
+
+general:
+  cache_file: cache.json
+  outtemplate: app/templates/standing.html
+  waitingfile: waiting.html
+  cache_dir: ./cache
+  secretkey: fcfff06f-aa92-4db5-b0b7-269c066c2d49
+
+log:
+  folder: ./logs
+  file: ./logs/log
+  level: INFO
+  format: '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+  max_bytes: 10485760
+  backup_count: 5
+
+models:
+  save_minute: 10
+
+task:
+  savetime: 600

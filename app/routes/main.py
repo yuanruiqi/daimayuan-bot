@@ -1,0 +1,57 @@
+from flask import Blueprint, render_template, request, session, abort, render_template_string
+from app.manager import start_task, task_progress, html
+import logging
+import json
+
+from app.config import CONFIG
+
+main_bp = Blueprint('main', __name__)
+logger = logging.getLogger(__name__)
+
+@main_bp.route("/", methods=["GET", "POST"])
+def index():
+    if request.method == "POST":
+        try:
+            start_id = int(request.form["start_id"])
+            end_id = int(request.form["end_id"])
+            cid = int(request.form["cid"])
+            return start_task(start_id, end_id, cid)
+        except ValueError:
+            return "请输入三个整数！"
+    return render_template("index.html", error=False)
+
+@main_bp.route("/retry", methods=["POST"])
+def retry():
+    try:
+        start_id = int(request.form["start_id"])
+        end_id = int(request.form["end_id"])
+        cid = int(request.form["cid"])
+    except ValueError:
+        abort(404)
+    else:
+        return start_task(start_id, end_id, cid)
+
+@main_bp.route("/waiting")
+def waiting():
+    return render_template(CONFIG['general']['waitingfile'])
+
+@main_bp.route("/progress")
+def progress():
+    task_id = session.get('task_id')
+    if task_id and task_id in task_progress:
+        return json.dumps(task_progress[task_id])
+    return json.dumps({"progress": 0, "status": "not_started"})
+
+@main_bp.route("/result")
+def result():
+    task_id = session.get('task_id')
+    if task_id and task_id in html:
+        logger.info(f"有用户试图访问任务 {task_id}")
+        return render_template_string(html[task_id])
+    else:
+        logger.info(f"有用户试图访问result，但是任务不存在或者没完成")
+        abort(404)
+
+@main_bp.errorhandler(404)
+def show_404_page(e):
+    return render_template('404.html'), 404

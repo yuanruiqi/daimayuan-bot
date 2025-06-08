@@ -3,10 +3,10 @@ from bs4 import BeautifulSoup
 from diskcache import Cache
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
-import config
 import math
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import logging
+from app.config import CONFIG
 
 logger = logging.getLogger(__name__)
 
@@ -32,8 +32,8 @@ def create_session():
     session.mount("https://", adapter)
     
     # 应用默认请求头和cookies
-    session.headers.update(config.down.headers)
-    session.cookies.update(config.down.cookies)
+    session.headers.update(CONFIG['down']['headers'])
+    session.cookies.update(CONFIG['down']['cookies'])
     
     return session
 
@@ -76,11 +76,11 @@ def parse_submission_page(html_content, submission_id):
 
 def fetch_submission(session, submission_id):
     """获取单个提交页面内容"""
-    url = f"{config.down.base_url}{submission_id}"
+    url = f"{CONFIG['down']['base_url']}{submission_id}"
     try:
         response = session.get(
             url, 
-            timeout=config.down.timeout, 
+            timeout=CONFIG['down']['timeout'], 
             allow_redirects=True
         )
         return response
@@ -140,10 +140,10 @@ def process_single_submission(submission_id, target_contest_id, cache, session):
 def process_submission_range(start_id, end_id, target_contest_id, cache, task_id, session, progress_callback ,should_cancel,should_pause):
     """
     将提交 ID 按照每 8 个一组并行处理，最后统一计算 404 次数。
-    如果累计 404 次数达到 config.down.max_404_count，则提前退出。
+    如果累计 404 次数达到 CONFIG['down']['max_404_count']，则提前退出。
     """
     submissions_data = []
-    not_found_count = config.down.max_404_count
+    not_found_count = CONFIG['down']['max_404_count']
     total = end_id - start_id + 1
 
     # 先生成 (idx, submission_id) 列表，方便并行时记录进度
@@ -153,7 +153,7 @@ def process_submission_range(start_id, end_id, target_contest_id, cache, task_id
     ]
 
     # 按照每 8 个一组分批
-    batch_size = config.down.batch_size
+    batch_size = CONFIG['down']['batch_size']
     num_batches = math.ceil(len(id_list) / batch_size)
 
     with ThreadPoolExecutor(max_workers=batch_size) as executor:
@@ -222,16 +222,16 @@ def process_submission_range(start_id, end_id, target_contest_id, cache, task_id
     return 'completed',submissions_data
 
 
-def run(start_id, end_id, contest_id, task_id, progress_callback=None,should_cancel=None,should_pause=None):
+def run(start_id, end_id, contest_id, task_id, progress_callback=None, should_cancel=None, should_pause=None):
     """主运行函数：收集指定比赛范围内的提交数据"""
     # 验证参数有效性
-    if start_id < config.down.min_id or start_id > end_id:
+    if start_id < CONFIG['down']['min_id'] or start_id > end_id:
         logger.warning(f"{task_id}因为不满足条件所以返回空，start={start_id},end={end_id}")
         return 'completed',[]
     
     # 初始化会话和缓存
     session = create_session()
-    cache = Cache(config.general.cache_dir)
+    cache = Cache(CONFIG['general']['cache_dir'])
     
     # 处理提交范围
     try:

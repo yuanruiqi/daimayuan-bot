@@ -3,13 +3,13 @@ import pickle
 import threading
 import logging
 from datetime import timedelta
-import config
 from collections.abc import MutableMapping
+from app.config import CONFIG
 
 logger = logging.getLogger(__name__)
 
 class SaveDict(MutableMapping):#线程安全&保存
-    def __init__(self, name: str, filepath: str, interval_minutes: float = config.models.save_minute):
+    def __init__(self, name: str, filepath: str, interval_minutes: float = CONFIG['models']['save_minute']):
         self.name = name
         self.filepath = filepath
         self._data = {}
