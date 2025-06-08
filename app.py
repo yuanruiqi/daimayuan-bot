@@ -26,6 +26,10 @@ def setup_logger():
     logger.setLevel(config.log.level)
     
     # 创建文件处理器
+
+    if not os.path.exists(config.log.folder):
+        os.mkdir(config.log.folder)
+
     file_handler = RotatingFileHandler(
         config.log.file,
         maxBytes=config.log.max_bytes,
@@ -266,7 +270,7 @@ def resume_task(task_id):
         task_pause_flags[task_id] = False
         task_progress[task_id]["status"] = "running"
         return jsonify(success=True, message="任务已恢复")
-    logger.warning(f"用户试图重启{task_id}，但是状态是{str(task_progress[task_id]["status"])}，不可恢复")
+    logger.warning(f"用户试图重启{task_id}，但是状态是{str(task_progress[task_id]['status'])}，不可恢复")
     return jsonify(success=False, message="非可恢复状态"+str(task_progress[task_id]["status"]))
 
 @app.route("/api/task/<task_id>/pause", methods=["POST"])

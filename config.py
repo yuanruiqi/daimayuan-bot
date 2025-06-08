@@ -41,6 +41,7 @@ class task:
     savetime=600#秒
 
 class log:
+    folder='./logs'
     file='./logs/log'
     level = 'INFO'   
     format = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'  
