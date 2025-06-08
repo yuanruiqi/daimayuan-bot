@@ -61,7 +61,7 @@ class SaveDict(MutableMapping):#线程安全&保存
     def close(self):
         if not self._isclosed:
             """手动关闭：保存一次并停止后台线程。"""
-            logger.info(f"{self.name}: Shutting down; saving data and stopping thread.")
+            print(f"{self.name}: Shutting down; saving data and stopping thread.")
             self._stop_event.set()
             self._thread.join()
             self._save_data()
@@ -69,8 +69,10 @@ class SaveDict(MutableMapping):#线程安全&保存
                 self._save_data()
             except NameError:
                 # 解析器关机阶段，builtins 里 open 已经不存在了
-                logger.warning(f"{self.name}: Skipping save on shutdown (open() gone).")
+                print(f"{self.name}: Skipping save on shutdown (open() gone).")
             self._isclosed = True   
+        else:
+            print("Waring:save after closed")
 
     def __enter__(self):
         return self

@@ -48,4 +48,4 @@ class log:
     backup_count = 5  
 
 class models:
-    save_minute=0.05#分钟
+    save_minute=10#分钟
