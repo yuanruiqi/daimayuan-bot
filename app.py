@@ -344,9 +344,7 @@ def shutdown(signum, frame):
     logger.info("清理完毕，程序退出")
     sys.exit()
 
-# 捕获 Ctrl+C 和 kill
-signal.signal(signal.SIGINT, shutdown)
-signal.signal(signal.SIGTERM, shutdown)
+atexit.register(shutdown)
 
 if __name__ == "__main__":
     logger.info("qidong")
