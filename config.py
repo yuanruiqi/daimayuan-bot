@@ -41,8 +41,12 @@ class task:
     savetime=600#秒
 
 class log:
+    folder='./logs'
     file='./logs/log'
     level = 'INFO'   
     format = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'  
     max_bytes = 10 * 1024 * 1024  # 10MB 日志文件大小限制
     backup_count = 5  
+
+class models:
+    save_minute=10#分钟

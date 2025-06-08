@@ -137,7 +137,7 @@ def process_single_submission(submission_id, target_contest_id, cache, session):
         return None, 'no_match'
 
 
-def process_submission_range(start_id, end_id, target_contest_id, cache, task_id, session, progress_callback ,should_cancel,should_pause,pause_event):
+def process_submission_range(start_id, end_id, target_contest_id, cache, task_id, session, progress_callback ,should_cancel,should_pause):
     """
     将提交 ID 按照每 8 个一组并行处理，最后统一计算 404 次数。
     如果累计 404 次数达到 config.down.max_404_count，则提前退出。
@@ -157,6 +157,7 @@ def process_submission_range(start_id, end_id, target_contest_id, cache, task_id
     num_batches = math.ceil(len(id_list) / batch_size)
 
     with ThreadPoolExecutor(max_workers=batch_size) as executor:
+        completed = False
         for batch_index in range(num_batches):
             batch_slice = id_list[batch_index * batch_size : (batch_index + 1) * batch_size]
             futures = {}
@@ -167,16 +168,17 @@ def process_submission_range(start_id, end_id, target_contest_id, cache, task_id
                 current_progress = int(idx * 100 / total)
                 if progress_callback and (idx % 10 == 0 or current_progress != (idx - 1) * 100 // total):
                     progress_callback(idx, total, submission_id)
-
-                # 提交任务
-                future = executor.submit(
-                    process_single_submission,
-                    submission_id,
-                    target_contest_id,
-                    cache,
-                    session
-                )
-                futures[future] = (idx, submission_id)
+                
+                if not executor._shutdown:
+                    # 提交任务
+                    future = executor.submit(
+                        process_single_submission,
+                        submission_id,
+                        target_contest_id,
+                        cache,
+                        session
+                    )
+                    futures[future] = (idx, submission_id)
 
             # 2. 等待这一批所有任务完成，统计 404 数量并收集 'ok' 结果
             batch_not_found = 0
@@ -207,23 +209,25 @@ def process_submission_range(start_id, end_id, target_contest_id, cache, task_id
                 break
             if should_cancel and should_cancel(task_id):
                 logger.info(f"{task_id} 中用户取消：")
-                break
+                return 'cancelled',[]
             if should_pause and should_pause(task_id):
                 logger.info(f"{task_id} 中用户暂停：")
-                pause_event.clear()
-                pause_event.wait()
-                logger.info(f"{task_id} 中用户恢复：")
+                return 'paused',[]
+            if executor._shutdown:
+                logger.warning(f"{task_id} 被系统关闭")
+                return 'paused',[]
+
     logger.info(f"{task_id} down 完成")
 
-    return submissions_data
+    return 'completed',submissions_data
 
 
-def run(start_id, end_id, contest_id, task_id, progress_callback=None,should_cancel=None,should_pause=None,pause_event=None):
+def run(start_id, end_id, contest_id, task_id, progress_callback=None,should_cancel=None,should_pause=None):
     """主运行函数：收集指定比赛范围内的提交数据"""
     # 验证参数有效性
     if start_id < config.down.min_id or start_id > end_id:
         logger.warning(f"{task_id}因为不满足条件所以返回空，start={start_id},end={end_id}")
-        return []
+        return 'completed',[]
     
     # 初始化会话和缓存
     session = create_session()
@@ -240,8 +244,7 @@ def run(start_id, end_id, contest_id, task_id, progress_callback=None,should_can
             task_id=task_id,
             progress_callback=progress_callback,
             should_cancel=should_cancel,
-            should_pause=should_pause,
-            pause_event=pause_event
+            should_pause=should_pause
         )
     finally:
         # 确保最后发送完成进度
