@@ -189,10 +189,10 @@
                     }
                     
                     // 处理暂停状态
-                    if(data.status=='not_started'){
+                    if(data.status=='not_started'|| data.status ==='cancelled'){
                         document.getElementById('pause-btn').style.display = 'none';
                         document.getElementById('resume-btn').style.display = 'none';
-                    }else if (data.status === 'paused' || data.status ==='cancelled') {
+                    }else if (data.status === 'paused') {
                         document.getElementById('pause-btn').style.display = 'none';
                         document.getElementById('resume-btn').style.display = '';
                     } else {

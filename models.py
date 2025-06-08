@@ -21,6 +21,7 @@ class SaveDict(MutableMapping):#线程安全&保存
         # 启动后台线程，延迟 interval 后首次保存
         self._thread = threading.Thread(target=self._run_saver, daemon=True)
         self._thread.start()
+        self._isclosed = False
 
     # —— MutableMapping 接口 —— #
     def __getitem__(self, key):
@@ -58,11 +59,18 @@ class SaveDict(MutableMapping):#线程安全&保存
 
     # —— 上下文管理 & 关闭 —— #
     def close(self):
-        """手动关闭：保存一次并停止后台线程。"""
-        logger.info(f"{self.name}: Shutting down; saving data and stopping thread.")
-        self._stop_event.set()
-        self._thread.join()
-        self._save_data()
+        if not self._isclosed:
+            """手动关闭：保存一次并停止后台线程。"""
+            logger.info(f"{self.name}: Shutting down; saving data and stopping thread.")
+            self._stop_event.set()
+            self._thread.join()
+            self._save_data()
+            try:
+                self._save_data()
+            except NameError:
+                # 解析器关机阶段，builtins 里 open 已经不存在了
+                logger.warning(f"{self.name}: Skipping save on shutdown (open() gone).")
+            self._isclosed = True   
 
     def __enter__(self):
         return self

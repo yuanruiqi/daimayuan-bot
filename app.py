@@ -258,10 +258,8 @@ def resume_task(task_id):
         logger.warning(f"用户试图重启任务，但task_id不存在")
         return jsonify(success=False, message="任务不存在")
     if task_progress[task_id]["status"] == "cancelled":
-        logger.info(f"用户重启被取消的任务{task_id}")
-        start,end,cid=task_progress[task_id]["start"],task_progress[task_id]["end"],task_progress[task_id]["contest_id"]
-        start_task(start,end,cid,task_id)
-        return jsonify(success=True, message="任务已重启")
+        logger.info(f"用户试图重启被取消的任务{task_id}")
+        return jsonify(success=False, message="任务因为被取消不可被重启")
     if task_progress[task_id]["status"] == 'paused':
         logger.info(f"用户重启被暂停的任务{task_id}")
         # 清除暂停标志并设置事件
@@ -317,7 +315,7 @@ def restart_task():
         try:
             progress = task_progress[task_id]
             if progress["status"] == 'running' or progress["status"] == 'paused':
-                start_task(progress["start"],progress["end"],progress["contest_id"],task_id,working_outside=False)
+                start_task(progress["start"],progress["end"],progress["contest_id"],task_id,working_outside=True)
             if progress["status"] == 'completed' or progress["status"] == 'cancelled':
                 t=threading.Timer(max(0,config.task.savetime-max(0,time.time()-progress["donetime"])), lambda: pop(task_id))
                 t.start()
@@ -343,8 +341,11 @@ def shutdown(signum=None, frame=None):
         except:
             pass
     logger.info("清理完毕，程序退出")
+    sys.exit()
 
 atexit.register(shutdown)
+signal.signal(signal.SIGTERM, shutdown)
+signal.signal(signal.SIGINT, shutdown)
 
 if __name__ == "__main__":
     logger.info("qidong")
