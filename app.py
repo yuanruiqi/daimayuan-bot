@@ -8,14 +8,11 @@ import os
 import threading
 import json
 import time
-import secrets
 import config
 import uuid
-import pandas
 from models import SaveDict
 import signal
 import sys
-import atexit
 
 app = Flask(__name__)
 app.secret_key = config.general.secretkey
@@ -42,6 +39,10 @@ def setup_logger():
     return logger
 
 # 在创建Flask应用后初始化日志
+
+if not os.path.exists('./databuf'):
+    os.mkdir('./databuf')
+
 logger = setup_logger()
 app.logger.handlers = logger.handlers
 app.logger.setLevel(logger.level)
