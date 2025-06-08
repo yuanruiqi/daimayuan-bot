@@ -328,7 +328,7 @@ def restart_task():
     for task_id in deleted_tasks:
         pop(task_id)
 
-def shutdown(signum, frame):
+def shutdown(signum=None, frame=None):
     logger.info("收到退出信号，正在清理...")
     # 取消所有定时器
     for t in timers_outside:
@@ -343,7 +343,6 @@ def shutdown(signum, frame):
         except:
             pass
     logger.info("清理完毕，程序退出")
-    sys.exit()
 
 atexit.register(shutdown)
 
