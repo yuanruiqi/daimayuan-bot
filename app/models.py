@@ -132,3 +132,5 @@ class Task:
         self.html = html
         self.pause_flag=pause_flag
         self.cancel_flag=cancel_flag
+
+    # todo
