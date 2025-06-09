@@ -1,4 +1,6 @@
-from flask import Blueprint, render_template, request, session, abort, render_template_string
+from flask import Blueprint, render_template, request, session, abort, render_template_string,redirect,url_for
+import app.manager
+from app.manager import start_task
 import logging
 import json
 
@@ -55,3 +57,11 @@ def result():
 @main_bp.errorhandler(404)
 def show_404_page(e):
     return render_template('404.html'), 404
+
+@main_bp.route("/task/<task_id>")
+def visit_by_taskid(task_id):
+    if not app.manager.task_progress.get(task_id,None):
+        abort(404)
+    session['task_id']=task_id
+    return redirect(url_for('main.waiting'))
+    
