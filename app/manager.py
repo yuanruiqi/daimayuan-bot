@@ -173,6 +173,7 @@ def resume_task(task_id):
         logger.info(f"用户重启被暂停的任务{task_id}")
         task_pause_flags[task_id] = False
         task_progress[task_id]["status"] = "running"
+        start_task(task_progress[task_id]["start"],task_progress[task_id]["end"],task_progress[task_id]["contest_id"],task_id)
         return jsonify(success=True, message="任务已恢复")
     logger.warning(f"用户试图重启{task_id}，但是状态是{str(task_progress[task_id]['status'])}，不可恢复")
     return jsonify(success=False, message="非可恢复状态"+str(task_progress[task_id]["status"]))
