@@ -62,5 +62,5 @@ def visit_by_taskid(task_id):
     if not app.manager.task_progress.get(task_id,None):
         abort(404)
     session['task_id']=task_id
-    return redirect(url_for('/waiting'))
+    return redirect(url_for('main.waiting'))
     
