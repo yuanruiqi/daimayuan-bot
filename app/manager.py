@@ -7,15 +7,16 @@ from flask import jsonify, session, redirect, url_for
 from app.models import SaveDict
 from app.services import run
 from app.config import CONFIG
+import signal,sys
 
 # 共享状态
 
-task_progress = SaveDict("task_progress","./databuf/task_progress.pkl")
-html = SaveDict("html","./databuf/html.pkl")
-task_cancel_flags = SaveDict("cancel_flags","./databuf/cancel_flags.pkl")
-task_pause_flags = SaveDict("task_pause_flags","./databuf/task_pause_flags.pkl")
+task_progress ={}
+html = {}
+task_cancel_flags ={}
+task_pause_flags = {}
 
-timers_outside = []
+timers = []
 
 logger = logging.getLogger(__name__)
 
@@ -31,6 +32,10 @@ def init_shared_state(app):
     html = SaveDict("html", "./databuf/html.pkl")
     task_cancel_flags = SaveDict("cancel_flags", "./databuf/cancel_flags.pkl")
     task_pause_flags = SaveDict("task_pause_flags", "./databuf/task_pause_flags.pkl")
+
+    # 注册关闭的行为
+    signal.signal(signal.SIGTERM, cleanup_on_shutdown)
+    signal.signal(signal.SIGINT, cleanup_on_shutdown)
 
 def pop(id):
     if id in task_progress:
@@ -84,7 +89,9 @@ def run_in_background(start_id, end_id, cid, task_id):
     finally:
         if task_id in task_pause_flags:
             task_pause_flags.pop(task_id, None)
-        threading.Timer(CONFIG['task']['savetime'], lambda: pop(task_id)).start()
+        tl = threading.Timer(CONFIG['task']['savetime'], lambda: pop(task_id))
+        tl.start()
+        timers.append(tl)
 
 def update_progress_callback(task_id):
     def callback(current, total, current_id):
@@ -131,7 +138,7 @@ def restart_task(app):
                         lambda: pop(task_id)
                     )
                     t.start()
-                    timers_outside.append(t)
+                    timers.append(t)
             except Exception as e:
                 logging.error(f"恢复任务{task_id}出错，{e}")
                 deleted_tasks.append(task_id)
@@ -176,9 +183,9 @@ def cancel_task(task_id):
     task_cancel_flags[task_id] = True
     return jsonify(success=True, message="任务取消请求已发送")
 
-def cleanup_on_shutdown():
+def cleanup_on_shutdown(signum=None, frame=None):
     # 取消所有定时器
-    for t in timers_outside:
+    for t in timers:
         try:
             t.cancel()
         except:
@@ -189,3 +196,5 @@ def cleanup_on_shutdown():
             store.close()
         except:
             pass
+    print("Exit called,SystemExit will be throwed")
+    sys.exit(0)

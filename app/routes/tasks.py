@@ -1,5 +1,6 @@
 from flask import Blueprint, render_template, session, request, redirect, url_for, jsonify, abort
-from app.manager import task_progress, pause_task, resume_task, cancel_task
+import app.manager
+from app.manager import pause_task, resume_task, cancel_task
 import time
 import logging
 from app.config import CONFIG
@@ -10,8 +11,8 @@ logger = logging.getLogger(__name__)
 @tasks_bp.route("/tasklist")
 def task_list():
     tasks = []
-    for task_id in task_progress.keys():
-        progress = task_progress[task_id]
+    for task_id in app.manager.task_progress.keys():
+        progress = app.manager.task_progress[task_id]
         tasks.append({
             "id": task_id,
             "status": progress["status"],
@@ -28,7 +29,7 @@ def task_list():
 @tasks_bp.route("/selecttask", methods=["POST"])
 def select_task():
     task_id = request.form.get("task_id")
-    if task_id not in task_progress:
+    if task_id not in app.manager.task_progress:
         abort(404)
     
     session['task_id'] = task_id

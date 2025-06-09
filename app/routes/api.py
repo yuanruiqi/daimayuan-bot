@@ -1,5 +1,6 @@
 from flask import Blueprint, jsonify
-from app.manager import task_progress, pause_task, resume_task
+import app.manager
+from app.manager import pause_task, resume_task
 import time
 from app.config import CONFIG
 
@@ -8,8 +9,8 @@ api_bp = Blueprint('api', __name__)
 @api_bp.route("/api/tasks")
 def get_tasks():
     tasks = []
-    for task_id in task_progress.keys():
-        progress = task_progress[task_id]
+    for task_id in app.manager.task_progress.keys():
+        progress = app.manager.task_progress[task_id]
         tasks.append({
             "id": task_id,
             "status": progress["status"],

@@ -4,7 +4,7 @@ import logging
 from logging.handlers import RotatingFileHandler
 import os
 from app.config import CONFIG
-from app.manager import restart_task
+from app.manager import restart_task,init_shared_state
 
 def setup_logger():
     logger = logging.getLogger()
@@ -37,9 +37,11 @@ def create_app():
     app.logger.handlers = logger.handlers
     app.logger.setLevel(logger.level)
 
+    
     # 注册蓝图
     from app.routes import register_routes
     register_routes(app)
+    init_shared_state(app)
 
     restart_task(app)
 

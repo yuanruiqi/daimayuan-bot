@@ -1,5 +1,6 @@
 from flask import Blueprint, render_template, request, session, abort, render_template_string
-from app.manager import start_task, task_progress, html
+import app.manager
+from app.manager import start_task
 import logging
 import json
 
@@ -38,16 +39,16 @@ def waiting():
 @main_bp.route("/progress")
 def progress():
     task_id = session.get('task_id')
-    if task_id and task_id in task_progress:
-        return json.dumps(task_progress[task_id])
+    if task_id and task_id in app.manager.task_progress:
+        return json.dumps(app.manager.task_progress[task_id])
     return json.dumps({"progress": 0, "status": "not_started"})
 
 @main_bp.route("/result")
 def result():
     task_id = session.get('task_id')
-    if task_id and task_id in html:
+    if task_id and task_id in app.manager.html:
         logger.info(f"有用户试图访问任务 {task_id}")
-        return render_template_string(html[task_id])
+        return render_template_string(app.manager.html[task_id])
     else:
         logger.info(f"有用户试图访问result，但是任务不存在或者没完成")
         abort(404)
