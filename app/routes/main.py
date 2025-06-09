@@ -4,6 +4,7 @@ from app.manager import start_task
 import logging
 import json
 
+import app.manager
 from app.config import CONFIG
 
 main_bp = Blueprint('main', __name__)
@@ -16,7 +17,7 @@ def index():
             start_id = int(request.form["start_id"])
             end_id = int(request.form["end_id"])
             cid = int(request.form["cid"])
-            return start_task(start_id, end_id, cid)
+            return app.manager.start_task(start_id, end_id, cid)
         except ValueError:
             return "请输入三个整数！"
     return render_template("index.html", error=False)
@@ -30,7 +31,7 @@ def retry():
     except ValueError:
         abort(404)
     else:
-        return start_task(start_id, end_id, cid)
+        return app.manager.start_task(start_id, end_id, cid)
 
 @main_bp.route("/waiting")
 def waiting():

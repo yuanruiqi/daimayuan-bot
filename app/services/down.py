@@ -6,6 +6,7 @@ from urllib3.util.retry import Retry
 import math
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import logging
+
 from app.config import CONFIG
 
 logger = logging.getLogger(__name__)

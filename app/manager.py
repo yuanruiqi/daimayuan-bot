@@ -3,11 +3,13 @@ import time
 import uuid
 import threading
 import logging
+import signal
+import sys
 from flask import jsonify, session, redirect, url_for
+
 from app.models import SaveDict
 from app.services import run
 from app.config import CONFIG
-import signal,sys
 
 # 共享状态
 

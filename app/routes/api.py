@@ -1,7 +1,7 @@
 from flask import Blueprint, jsonify
-import app.manager
-from app.manager import pause_task, resume_task
 import time
+
+import app.manager
 from app.config import CONFIG
 
 api_bp = Blueprint('api', __name__)
@@ -26,8 +26,8 @@ def get_tasks():
 
 @api_bp.route("/api/task/<task_id>/resume", methods=["POST"])
 def api_resume_task(task_id):
-    return resume_task(task_id)
+    return app.manager.resume_task(task_id)
 
 @api_bp.route("/api/task/<task_id>/pause", methods=["POST"])
 def api_pause_task(task_id):
-    return pause_task(task_id)
+    return app.manager.pause_task(task_id)
