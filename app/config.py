@@ -4,6 +4,4 @@ from pathlib import Path
 
 CONFIG = yaml.safe_load(Path('config.yaml').read_text())
 
-# 使用方式
-# from app.config import CONFIG
-# print(CONFIG['database']['host'])
+# 是否要改成 CONFIG.general.... 的形式？
