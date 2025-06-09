@@ -9,7 +9,7 @@ from flask import jsonify, session, redirect, url_for
 
 from app.models import SaveDict
 from app.services import run
-from app.config import CONFIG
+from app.config import CONFIG,config
 
 # 共享状态
 
@@ -91,7 +91,7 @@ def run_in_background(start_id, end_id, cid, task_id):
     finally:
         if task_id in task_pause_flags:
             task_pause_flags.pop(task_id, None)
-        tl = threading.Timer(CONFIG['task']['savetime'], lambda: pop(task_id))
+        tl = threading.Timer(config.task.savetime, lambda: pop(task_id))
         tl.start()
         timers.append(tl)
 
@@ -135,7 +135,7 @@ def restart_task(app):
                               progress["contest_id"], task_id, True)
                 elif progress["status"] in ['completed', 'cancelled']:
                     t = threading.Timer(
-                        max(0, CONFIG['task']['savetime'] - 
+                        max(0, config.task.savetime - 
                         max(0, time.time() - progress["donetime"])), 
                         lambda: pop(task_id)
                     )

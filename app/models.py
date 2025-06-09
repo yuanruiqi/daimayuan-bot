@@ -4,13 +4,14 @@ import threading
 import logging
 from datetime import timedelta
 from collections.abc import MutableMapping
+import time
 
-from app.config import CONFIG
+from app.config import CONFIG,config
 
 logger = logging.getLogger(__name__)
 
 class SaveDict(MutableMapping):#线程安全&保存
-    def __init__(self, name: str, filepath: str, interval_minutes: float = CONFIG['models']['save_minute']):
+    def __init__(self, name: str, filepath: str, interval_minutes: float = config.models.save_minute):
         self.name = name
         self.filepath = filepath
         self._data = {}
@@ -117,3 +118,17 @@ class SaveDict(MutableMapping):#线程安全&保存
                 logger.warning(f"{self.name}: Data file does not contain a dict; ignored.")
         except Exception:
             logger.exception(f"{self.name}: Failed to load data from {self.filepath}.") 
+
+class Task:
+    def __init__(self, start_id, end_id, cid, status="running",createtime=time.time(),donetime=1e18,html=None,cancel_flag=False,pause_flag=False):
+        self.progress = 0
+        self.status = status
+        self.current = start_id
+        self.start = start_id
+        self.end = end_id
+        self.contest_id = cid
+        self.createtime = createtime
+        self.donetime = donetime
+        self.html = html
+        self.pause_flag=pause_flag
+        self.cancel_flag=cancel_flag

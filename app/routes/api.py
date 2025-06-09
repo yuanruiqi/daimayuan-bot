@@ -2,7 +2,7 @@ from flask import Blueprint, jsonify
 import time
 
 import app.manager
-from app.config import CONFIG
+from app.config import CONFIG,config
 
 api_bp = Blueprint('api', __name__)
 
@@ -19,10 +19,10 @@ def get_tasks():
             "end": progress["end"],
             "current": progress["current"],
             "contest_id": progress["contest_id"],
-            "remaining": round(CONFIG['task']['savetime'] - (time.time() - progress["donetime"]), 2)
+            "remaining": round(config.task.savetime - (time.time() - progress["donetime"]), 2)
         })
     tasks.sort(key=lambda x: x["remaining"], reverse=True)
-    return jsonify(tasks=tasks, tottime=CONFIG['task']['savetime'])
+    return jsonify(tasks=tasks, tottime=config.task.savetime)
 
 @api_bp.route("/api/task/<task_id>/resume", methods=["POST"])
 def api_resume_task(task_id):

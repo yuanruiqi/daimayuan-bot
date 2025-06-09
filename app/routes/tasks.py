@@ -3,7 +3,7 @@ import time
 import logging
 
 import app.manager
-from app.config import CONFIG
+from app.config import CONFIG,config
 
 tasks_bp = Blueprint('tasks', __name__)
 logger = logging.getLogger(__name__)
@@ -20,11 +20,11 @@ def task_list():
             "start": progress["start"],
             "end": progress["end"],
             "current": progress["current"],
-            "remaining": round(CONFIG['task']['savetime'] - (time.time() - progress["donetime"]), 2)
+            "remaining": round(config.task.savetime - (time.time() - progress["donetime"]), 2)
         })
     tasks.sort(key=lambda x: x["remaining"], reverse=True)
     logger.info(f"有用户试图访问tasklist，共{len(tasks)} 个数据")
-    return render_template("tasklist.html", tasks=tasks, tottime=CONFIG['task']['savetime'])
+    return render_template("tasklist.html", tasks=tasks, tottime=config.task.savetime)
 
 @tasks_bp.route("/selecttask", methods=["POST"])
 def select_task():

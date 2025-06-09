@@ -5,7 +5,7 @@ import logging
 import json
 
 import app.manager
-from app.config import CONFIG
+from app.config import CONFIG,config
 
 main_bp = Blueprint('main', __name__)
 logger = logging.getLogger(__name__)
@@ -35,7 +35,7 @@ def retry():
 
 @main_bp.route("/waiting")
 def waiting():
-    return render_template(CONFIG['general']['waitingfile'])
+    return render_template(config.general.waitingfile)
 
 @main_bp.route("/progress")
 def progress():
@@ -62,6 +62,4 @@ def show_404_page(e):
 def visit_by_taskid(task_id):
     if not app.manager.task_progress.get(task_id,None):
         abort(404)
-    session['task_id']=task_id
-    return redirect(url_for('main.waiting'))
     
