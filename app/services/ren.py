@@ -1,8 +1,9 @@
-import pandas as pd
 from bs4 import BeautifulSoup
 from jinja2 import Template
-import config
 import logging
+
+from app.config import CONFIG
+
 
 logger = logging.getLogger(__name__)
 def run(df, startid, endid, cid):
@@ -35,7 +36,7 @@ def generate_table_html(df_sorted):
     )
 
 def build_html(table_html, startid, endid, cid):
-    with open(config.general.outtemplate, 'r', encoding='utf-8') as f:
+    with open(CONFIG['general']['outtemplate'], 'r', encoding='utf-8') as f:
         html_template = f.read()
     template = Template(html_template)
     return template.render(

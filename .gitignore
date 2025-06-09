@@ -1,9 +1,9 @@
 Pipfile
 Pipfile.lock
-.vscode
+**/.vscode
 cache.json
 lock
-__pycache__/*
-cache/*
-logs/*
-databuf/*
+**/__pycache__
+cache
+logs
+databuf
