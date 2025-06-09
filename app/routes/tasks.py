@@ -1,8 +1,8 @@
 from flask import Blueprint, render_template, session, request, redirect, url_for, jsonify, abort
-import app.manager
-from app.manager import pause_task, resume_task, cancel_task
 import time
 import logging
+
+import app.manager
 from app.config import CONFIG
 
 tasks_bp = Blueprint('tasks', __name__)
@@ -41,7 +41,7 @@ def cancel_task_session():
     if not task_id:
         logger.warning(f"用户试图取消任务但失败: {task_id}")
         return jsonify(success=False, message="未找到任务ID")
-    return cancel_task(task_id)
+    return app.manager.cancel_task(task_id)
 
 @tasks_bp.route("/pause", methods=["POST"])
 def pause_task_session():
@@ -49,7 +49,7 @@ def pause_task_session():
     if not task_id:
         logger.warning(f"用户试图暂停任务但是无session")
         return jsonify(success=False, message="未找到任务ID")
-    return pause_task(task_id)
+    return app.manager.pause_task(task_id)
 
 @tasks_bp.route("/resume", methods=["POST"])
 def resume_task_session():
@@ -57,4 +57,4 @@ def resume_task_session():
     if not task_id:
         logger.warning(f"用户试图恢复任务但是无session")
         return jsonify(success=False, message="未找到任务ID")
-    return resume_task(task_id)
+    return app.manager.resume_task(task_id)

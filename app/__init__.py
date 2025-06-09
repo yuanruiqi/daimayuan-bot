@@ -1,8 +1,8 @@
-import yaml
 from flask import Flask
 import logging
 from logging.handlers import RotatingFileHandler
 import os
+
 from app.config import CONFIG
 from app.manager import restart_task,init_shared_state
 
@@ -34,8 +34,8 @@ def create_app():
     mkdir()
 
     logger = setup_logger()
-    app.logger.handlers = logger.handlers
-    app.logger.setLevel(logger.level)
+    # app.logger.handlers = logger.handlers
+    # app.logger.setLevel(logger.level)
 
     
     # 注册蓝图

@@ -1,7 +1,8 @@
+import logging
+
 from .down import run as down
 from .ren import run as ren
 from .anal import run as anal
-import logging
 
 logger = logging.getLogger(__name__)
 
