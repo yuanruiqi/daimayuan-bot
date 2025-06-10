@@ -472,6 +472,8 @@
         let currentFilter = 'all';
         let searchQuery = '';
         let autoRefreshInterval;
+
+        let countdownInterval;
         
         // 初始化页面
         document.addEventListener('DOMContentLoaded', function() {
@@ -648,6 +650,7 @@
             document.querySelectorAll('.resume').forEach(btn => {
                 btn.addEventListener('click', () => resumeTask(btn.dataset.id));
             });
+            startCountdown(totalTime);
         }
         
         // 更新统计信息
@@ -733,6 +736,28 @@
                 notification.classList.remove('show');
             }, 3000);
         }
+
+        function startCountdown(totalTime) {
+            // 先清除旧的定时器
+            if (countdownInterval) clearInterval(countdownInterval);
+            countdownInterval = setInterval(() => {
+                document.querySelectorAll('#task-list-body tr').forEach(row => {
+                // 找到当前显示的秒数（假设格式为 "123s" 或 "等待"）
+                const td = row.cells[4];
+                let text = td.childNodes[0].textContent.trim();
+                if (text.endsWith('s')) {
+                    let sec = parseFloat(text);
+                    if (sec > 0) sec-=0.03;
+                    sec=Math.max(sec,0)
+                    // 更新文本
+                    td.childNodes[0].textContent = sec.toFixed(2) + 's';
+                    // 更新进度条百分比
+                    const pct = Math.min(100, (sec / totalTime) * 100);
+                    td.querySelector('.progress-bar').style.width = pct + '%';
+                }
+                });
+            }, 30);
+            }
     </script>
 </body>
 </html>
