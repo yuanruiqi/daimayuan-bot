@@ -7,3 +7,4 @@ lock
 cache
 logs
 databuf
+*.pyc
