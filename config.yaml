@@ -5,7 +5,7 @@ down:
     Accept-Language: zh-CN,zh;q=0.9,en;q=0.8
     Connection: keep-alive
   cookies:
-    UOJSESSID: 3htc4g05jcb0oa4pn5adtjhe3n
+    UOJSESSID: 
   min_id: 3932620
   base_url: http://oj.daimayuan.top/submission/
   max_404_count: 15
