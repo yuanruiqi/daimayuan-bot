@@ -74,7 +74,7 @@ class SaveDict(MutableMapping):#线程安全&保存
                 print(f"{self.name}: Skipping save on shutdown (open() gone).")
             self._isclosed = True   
         else:
-            print("Waring:save after closed")
+            print("Warning:save after closed")
 
     def __enter__(self):
         return self
