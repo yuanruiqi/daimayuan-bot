@@ -96,13 +96,13 @@ def process_single_submission(session, submission_id, target_contest_id, cache,c
     try:
         cached_data = cache.get(cache_key)
         if cached_data is not None:
-            logger.info(f"从缓存读取{submission_id}的数据: {cached_data}")
+            # logger.info(f"从缓存读取{submission_id}的数据: {cached_data}")
             # 如果是旧的三元组格式，转换为四元组
-            if len(cached_data[0]) == 3:
-                submission_id, username, problem_id = cached_data[0]
-                result = (submission_id, username, problem_id, -1)  # 添加默认分数0
-                logger.info(f"转换缓存数据为四元组: {result}")
-                return result, 'ok'
+            # if len(cached_data[0]) == 3:
+            #     submission_id, username, problem_id = cached_data[0]
+            #     result = (submission_id, username, problem_id, -1)  # 添加默认分数0
+            #     logger.info(f"转换缓存数据为四元组: {result}")
+            #     return result, 'ok'
             return cached_data
     except Exception as e:
         logger.warning(f"从缓存读取{submission_id}失败: {e}")
@@ -148,7 +148,7 @@ def process_single_submission(session, submission_id, target_contest_id, cache,c
         
         # 构建结果
         result = (submission_id, username, problem_id, score)
-        logger.info(f"处理提交{submission_id}的结果: {result}")
+        # logger.info(f"处理提交{submission_id}的结果: {result}")
         
         # 存入缓存
         try:
@@ -222,7 +222,7 @@ def run(start_id, end_id, target_contest_id, task_id, progress_callback=None, sh
                 idx, submission_id = futures[future]
                 try:
                     data_tuple, status = future.result()
-                    logger.info(f"获取到提交{submission_id}的结果: data_tuple={data_tuple}, status={status}")
+                    # logger.info(f"获取到提交{submission_id}的结果: data_tuple={data_tuple}, status={status}")
                     # 更新进度
                     if progress_callback:
                         progress_callback(idx, total, submission_id)
@@ -232,13 +232,13 @@ def run(start_id, end_id, target_contest_id, task_id, progress_callback=None, sh
                     
                 if status == 'not_found':
                     batch_not_found += 1
-                    logger.info(f"提交 {submission_id} 不存在")
+                    # logger.info(f"提交 {submission_id} 不存在")
                 elif status == 'error' or status == 'no_match':
                     # 'error' 和 'no_match' 都不计入 404，也不收集
                     continue
                 else:  # status == 'ok'
                     submissions_data.append(data_tuple)
-                    logger.info(f"添加有效提交: {submission_id}, 数据: {data_tuple}")
+                    # logger.info(f"添加有效提交: {submission_id}, 数据: {data_tuple}")
             
             # 3. 本批次结束后，统一扣减 not_found_count
             not_found_count -= batch_not_found
