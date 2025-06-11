@@ -50,7 +50,7 @@ def render_table(df, name_order, submission_history, problem_map):
         elif col == '用户名':
             th_text = col
         elif problem_map and str(col).isdigit() and int(col) in problem_map:
-            th_text = f'{col}<br>{problem_map[int(col)]}'
+            th_text = f'{col}：{problem_map[int(col)]}'
         else:
             th_text = col
         html.append(f'<th data-sort>{th_text}</th>')
@@ -72,6 +72,7 @@ def render_table(df, name_order, submission_history, problem_map):
                 history_info = ''
                 if str(col).isdigit() and username in submission_history and int(col) in submission_history[username]:
                     history_items = submission_history[username][int(col)]
+                    history_items.sort(reverse=True)
                     history_html = []
                     for sub_id, score in history_items:
                         history_html.append(
