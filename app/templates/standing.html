@@ -10,6 +10,7 @@
 <script src="https://unpkg.com/tablesort@5.3.0/dist/tablesort.min.js"></script>
 <script src="https://unpkg.com/tablesort/dist/sorts/tablesort.number.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chroma-js@2.4.2/chroma.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -346,6 +347,21 @@
     color: #2c3e50;
   }
   
+  /* 分数颜色 - 单题（满分100） */
+  .score-cell[data-max="100"] .score-text,
+  .score-cell[data-max="300"] .score-text {
+    background: linear-gradient(to right, #e74c3c, #f39c12, #27ae60);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    background-size: 200% 100%;
+  }
+  
+  /* 负分颜色 */
+  .score-negative {
+    color: #95a5a6 !important;  /* 灰色 */
+  }
+  
   /* 排名样式 */
   .rank-cell {
     font-weight: 700;
@@ -411,6 +427,71 @@
     left: -100px;
     transform: rotate(45deg);
   }
+  
+  /* 提交历史样式 */
+  .submission-history {
+    display: none;
+    position: absolute;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    padding: 8px;
+    z-index: 1000;
+    min-width: 150px;
+    max-height: 200px;
+    overflow-y: auto;
+  }
+
+  .history-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 4px 8px;
+    border-bottom: 1px solid #eee;
+  }
+
+  .history-item:last-child {
+    border-bottom: none;
+  }
+
+  .history-item .score {
+    font-weight: 600;
+    color: var(--primary-color);
+  }
+
+  .history-item .submission-link {
+    color: var(--secondary-color);
+    text-decoration: none;
+    font-size: 12px;
+  }
+
+  .history-item .submission-link:hover {
+    text-decoration: underline;
+  }
+
+  .score-cell {
+    position: relative;
+    cursor: pointer;
+  }
+
+  .score-cell:hover .submission-history {
+    display: block;
+  }
+
+  /* 表格标题样式 */
+  th {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 150px;
+  }
+
+  th:hover {
+    overflow: visible;
+    white-space: normal;
+    word-break: break-word;
+  }
 </style>
 </head>
 <body>
@@ -449,7 +530,7 @@
         </div>
       </div>
     </div>
-    
+    <span style="text-align: center;">将鼠标移到分数上查看提交记录，点击id跳转。</span>
     <div class="card">
       <div class="table-container">
         <!-- 表格内容将由后端模板渲染 -->
@@ -510,6 +591,98 @@
       rows.forEach(row => {
         const username = row.cells[1].textContent.toLowerCase();
         row.style.display = username.includes(searchTerm) ? '' : 'none';
+      });
+    });
+
+    // 提交历史交互
+    document.querySelectorAll('.score-cell').forEach(cell => {
+      const history = cell.querySelector('.submission-history');
+      if (history) {
+        // 点击单元格时显示历史记录
+        cell.addEventListener('click', function(e) {
+          e.stopPropagation();
+          const allHistories = document.querySelectorAll('.submission-history');
+          allHistories.forEach(h => {
+            if (h !== history) {
+              h.style.display = 'none';
+            }
+          });
+          history.style.display = history.style.display === 'none' ? 'block' : 'none';
+        });
+      }
+    });
+
+    // 点击页面其他地方时隐藏所有历史记录
+    document.addEventListener('click', function(e) {
+      if (!e.target.closest('.score-cell')) {
+        document.querySelectorAll('.submission-history').forEach(history => {
+          history.style.display = 'none';
+        });
+      }
+    });
+
+    // 分数颜色插值色带
+    const colorScale = chroma.scale(['#e74c3c', '#f39c12', '#27ae60']).domain([0, 50, 100]);
+    document.querySelectorAll('#rank-table tbody td.score-cell').forEach(cell => {
+      let scoreSpan = cell.querySelector('.score-text');
+      if (!scoreSpan) {
+        const val = cell.childNodes[0] && cell.childNodes[0].nodeType === 3 ? cell.childNodes[0].textContent : cell.textContent;
+        scoreSpan = document.createElement('span');
+        scoreSpan.className = 'score-text';
+        scoreSpan.textContent = val.trim();
+        if (cell.childNodes[0] && cell.childNodes[0].nodeType === 3) {
+          cell.childNodes[0].replaceWith(scoreSpan);
+        } else {
+          cell.innerHTML = '';
+          cell.appendChild(scoreSpan);
+        }
+      }
+      const score = parseFloat(scoreSpan.textContent);
+      const username = cell.parentElement.cells[1].textContent;
+      const ths = cell.closest('table').querySelectorAll('thead th');
+      const problemName = ths[cell.cellIndex].textContent.trim();
+      const isTotalScore = cell.cellIndex === cell.parentElement.cells.length - 1;
+      const maxScore = isTotalScore ? 300 : 100;
+      cell.setAttribute('data-max', maxScore);
+      if (score < 0) {
+        scoreSpan.style.color = '#95a5a6';
+      } else {
+        let percent = Math.max(0, Math.min(1, score / maxScore));
+        scoreSpan.style.color = colorScale(percent * 100).hex();
+        scoreSpan.style.background = '';
+        scoreSpan.style.backgroundClip = '';
+        scoreSpan.style.webkitBackgroundClip = '';
+      }
+      // 获取提交历史
+      const history = cell.querySelector('.submission-history');
+      if (history) {
+        const historyItems = history.querySelectorAll('.history-item');
+        let maxScore = -1;
+        let lastScore = -1;
+        historyItems.forEach(item => {
+          const itemScore = parseFloat(item.querySelector('.score').textContent);
+          if (itemScore > maxScore) {
+            maxScore = itemScore;
+          }
+          lastScore = itemScore;
+        });
+        cell.setAttribute('data-bs-toggle', 'tooltip');
+        if (maxScore >= 0) {
+          cell.setAttribute('title', `${username} 在 ${problemName} 的最高分: ${maxScore}分`);
+        } else {
+          cell.setAttribute('title', `${username} 在 ${problemName} 的得分: ${score}分`);
+        }
+      } else {
+        cell.setAttribute('data-bs-toggle', 'tooltip');
+        cell.setAttribute('title', `${username} 在 ${problemName} 的得分: ${score}分`);
+      }
+    });
+
+    // 初始化工具提示
+    $(function () {
+      $('[data-bs-toggle="tooltip"]').tooltip({
+        trigger: 'hover',
+        placement: 'top'
       });
     });
 
@@ -596,22 +769,6 @@
         }
       });
     }
-
-    // 添加工具提示
-    const scoreCells = document.querySelectorAll('#rank-table tbody td:nth-child(n+3)');
-    scoreCells.forEach(cell => {
-      const username = cell.parentElement.cells[1].textContent;
-      const score = cell.textContent;
-      cell.setAttribute('data-bs-toggle', 'tooltip');
-      cell.setAttribute('title', `${username}: ${score}分`);
-    });
-
-    $(function () {
-      $('[data-bs-toggle="tooltip"]').tooltip({
-        trigger: 'hover',
-        placement: 'top'
-      });
-    });
   });
 
   // 全屏功能实现

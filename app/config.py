@@ -1,7 +1,9 @@
 # app/config.py
 import yaml
 from pathlib import Path
+from box import Box
+from typing import cast
 
-CONFIG = yaml.safe_load(Path('config.yaml').read_text())
+CONFIG = cast(dict,yaml.safe_load(Path('config.yaml').read_text()))
 
-# 是否要改成 CONFIG.general.... 的形式？
+config = cast(Box, Box(CONFIG))  # type: ignore
