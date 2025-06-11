@@ -6,15 +6,15 @@ from app.config import CONFIG
 
 
 logger = logging.getLogger(__name__)
-def run(df, startid, endid, cid):
+def run(df, startid, endid, cid, name_order, submission_history, problem_map):
 
     df = prepare_data(df)
     df_sorted = sort_and_rank(df)
-    table_html = generate_table_html(df_sorted)
+    table_html = render_table(df_sorted,name_order, submission_history, problem_map)
     html = build_html(table_html, startid, endid, cid)
-    html = add_cell_coloring(html, df_sorted)
     logger.info(f"{startid},{endid},{cid},已生成 HTML")
     return html
+
 
 def prepare_data(df):
     df = df.copy()
@@ -22,18 +22,9 @@ def prepare_data(df):
     return df
 
 def sort_and_rank(df):
-    df_sorted = df.sort_values(by='总分', ascending=False).reset_index(drop=True)
-    df_sorted.index += 1
-    df_sorted.insert(0, '#', df_sorted.index)
-    return df_sorted
-
-def generate_table_html(df_sorted):
-    return df_sorted.to_html(
-        index=False,
-        escape=False,
-        classes='table table-striped table-bordered',
-        table_id='rank-table'
-    )
+    df = df.sort_values('总分', ascending=False)
+    df.insert(0, '排名', range(1, len(df) + 1))
+    return df
 
 def build_html(table_html, startid, endid, cid):
     with open(CONFIG['general']['outtemplate'], 'r', encoding='utf-8') as f:
@@ -46,24 +37,56 @@ def build_html(table_html, startid, endid, cid):
         cid=cid
     )
 
-def add_cell_coloring(html, df_sorted):
-    soup = BeautifulSoup(html, 'html.parser')
-    tbody = soup.find('tbody')
-    if tbody:
-        for tr in tbody.find_all('tr'):
-            tds = tr.find_all('td')
-            for idx, td in enumerate(tds[2:], 2):  # 跳过序号和用户名列
-                try:
-                    val = int(td.get_text())
-                    td['data-sort-value'] = val
-                    if idx == len(tds) - 1:
-                        max_score = 100 * (len(tds) - 3)  # 假设每题满分100
-                        scaled_val = min(val, max_score) / max_score
-                    else:
-                        scaled_val = min(val, 100) / 100
-                    hue = int(120 * scaled_val)  # 绿色到红色
-                    td['style'] = f'color: hsl({hue}, 100%, 40%);'
-                except ValueError:
-                    continue
-    return str(soup)
+def render_table(df, name_order, submission_history, problem_map):
+    """渲染表格为HTML"""
+    html = []
+    html.append('<table id="rank-table" class="table table-hover">')
+    
+    # 表头
+    html.append('<thead><tr>')
+    for col in df.columns:
+        if col == '排名':
+            th_text = col
+        elif col == '用户名':
+            th_text = col
+        elif problem_map and str(col).isdigit() and int(col) in problem_map:
+            th_text = f'{col}<br>{problem_map[int(col)]}'
+        else:
+            th_text = col
+        html.append(f'<th data-sort>{th_text}</th>')
+    html.append('</tr></thead>')
+    
+    # 表格内容
+    html.append('<tbody>')
+    for _, row in df.iterrows():
+        html.append('<tr>')
+        for col in df.columns:
+            cell_value = row[col]
+            if col == '用户名':
+                username = cell_value
+                cell = f'<td class="username-cell">{cell_value}</td>'
+            elif col == '排名':
+                cell = f'<td class="rank-cell">{cell_value}</td>'
+            else:
+                # 添加提交历史信息
+                history_info = ''
+                if str(col).isdigit() and username in submission_history and int(col) in submission_history[username]:
+                    history_items = submission_history[username][int(col)]
+                    history_html = []
+                    for sub_id, score in history_items:
+                        history_html.append(
+                            f'<div class="history-item">'
+                            f'<a href="http://oj.daimayuan.top/submission/{sub_id}" class="submission-link">#{sub_id}</a>'
+                            f'<span class="score">{score}</span>'
+                            f'</div>'
+                        )
+                    history_info = f'<div class="submission-history">{chr(10).join(history_html)}</div>'
+                
+                # 使用span包裹分数，以便应用渐变色
+                cell = f'<td class="score-cell">{history_info}<span class="score-text">{cell_value}</span></td>'
+            html.append(cell)
+        html.append('</tr>')
+    html.append('</tbody></table>')
+    
+    return chr(10).join(html)
 

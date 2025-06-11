@@ -53,7 +53,7 @@ def get_cache():
         retry=cache_config['retry']
     )
 
-def fetch_submission(session, submission_id):
+def fetch_submission(session,submission_id):
     """获取单个提交的页面内容"""
     url = f"{CONFIG['down']['base_url']}{submission_id}"
     try:
@@ -64,24 +64,30 @@ def fetch_submission(session, submission_id):
         return None
 
 def get_contest_problems(session, contest_id):
-    """获取比赛中的所有问题ID"""
+    """获取比赛中的所有问题ID和题目名称"""
     url = f"http://oj.daimayuan.top/contest/{contest_id}"
     response = session.get(url)
+
+    print(response.text)
     if response.status_code != 200:
         return None
     
     soup = BeautifulSoup(response.text, 'html.parser')
-    problem_links = soup.select('a[href*="/problem/"]')
-    problem_ids = set()
-    
-    for link in problem_links:
-        try:
-            problem_id = int(link['href'].split('/problem/')[1])
-            problem_ids.add(problem_id)
-        except (ValueError, IndexError):
+    problem_map = dict()
+    for tr in soup.select('table tbody tr'):
+        tds = tr.find_all('td')
+        if len(tds) < 2:
             continue
-    
-    return problem_ids
+        a = tds[1].find('a')
+        if not a or '/problem/' not in a['href']:
+            continue
+        try:
+            problem_id = int(a['href'].split('/problem/')[1])
+            problem_name = a.text.strip()
+            problem_map[problem_id] = problem_name
+        except Exception:
+            continue
+    return problem_map
 
 def process_single_submission(session, submission_id, target_contest_id, cache):
     """处理单个提交，包含缓存逻辑"""
@@ -91,12 +97,19 @@ def process_single_submission(session, submission_id, target_contest_id, cache):
     try:
         cached_data = cache.get(cache_key)
         if cached_data is not None:
+            logger.info(f"从缓存读取{submission_id}的数据: {cached_data}")
+            # 如果是旧的三元组格式，转换为四元组
+            if len(cached_data[0]) == 3:
+                submission_id, username, problem_id = cached_data[0]
+                result = (submission_id, username, problem_id, -1)  # 添加默认分数0
+                logger.info(f"转换缓存数据为四元组: {result}")
+                return result, 'ok'
             return cached_data
     except Exception as e:
         logger.warning(f"从缓存读取{submission_id}失败: {e}")
     
     # 缓存未命中，获取新数据
-    response = fetch_submission(session, submission_id)
+    response = fetch_submission(session,submission_id)
     if response is None:
         return None, 'error'
     
@@ -132,16 +145,17 @@ def process_single_submission(session, submission_id, target_contest_id, cache):
         username_elem = soup.select_one('td span.uoj-username')
         if not username_elem:
             return None, 'error'
-        
+            
         username = username_elem.text.strip()
         score_elem = soup.select_one('td a.uoj-score')
         if not score_elem:
             return None, 'error'
-        
+            
         score = score_elem.text.strip()
         
         # 构建结果
-        result = (submission_id, username, score)
+        result = (submission_id, username, problem_id, score)
+        logger.info(f"处理提交{submission_id}的结果: {result}")
         
         # 存入缓存
         try:
@@ -154,22 +168,33 @@ def process_single_submission(session, submission_id, target_contest_id, cache):
         logger.warning(f"处理提交{submission_id}时出错: {e}")
         return None, 'error'
 
-def process_submission_range(start_id, end_id, target_contest_id, cache, task_id, session, progress_callback, should_cancel, should_pause):
-    """
-    将提交 ID 按照每 8 个一组并行处理，最后统一计算 404 次数。
-    如果累计 404 次数达到 CONFIG['down']['max_404_count']，则提前退出。
-    """
+def run(start_id, end_id, target_contest_id, task_id, progress_callback=None, should_cancel=None, should_pause=None):
+    """主运行函数：收集指定比赛范围内的提交数据"""
+    if not all(isinstance(x, int) for x in [start_id, end_id, target_contest_id]):
+        logger.error("参数类型错误：所有ID必须是整数")
+        return 'error', []
+    
+    # 创建会话
+    session = create_session()
+    
+    # 获取比赛的所有问题ID和名称
+    problem_map = get_contest_problems(session, target_contest_id)
+    if not problem_map:
+        logger.error(f"无法获取比赛 {target_contest_id} 的问题列表")
+        return 'error', []
+    
+    # 创建缓存
+    cache = get_cache()
+    
+    # 准备提交ID列表
+    id_list = [(i, start_id + i) for i in range(end_id - start_id + 1)]
+    
+    # 收集数据
     submissions_data = []
     not_found_count = CONFIG['down']['max_404_count']
     total = end_id - start_id + 1
-
-    # 先生成 (idx, submission_id) 列表，方便并行时记录进度
-    id_list = [
-        (idx, submission_id)
-        for idx, submission_id in enumerate(range(start_id, end_id + 1), start=1)
-    ]
-
-    # 按照每 8 个一组分批
+    
+    # 分批处理
     batch_size = CONFIG['down']['batch_size']
     num_batches = math.ceil(len(id_list) / batch_size)
 
@@ -197,6 +222,7 @@ def process_submission_range(start_id, end_id, target_contest_id, cache, task_id
                 idx, submission_id = futures[future]
                 try:
                     data_tuple, status = future.result()
+                    logger.info(f"获取到提交{submission_id}的结果: data_tuple={data_tuple}, status={status}")
                     # 更新进度
                     if progress_callback:
                         progress_callback(idx, total, submission_id)
@@ -206,14 +232,14 @@ def process_submission_range(start_id, end_id, target_contest_id, cache, task_id
                     
                 if status == 'not_found':
                     batch_not_found += 1
-                    logger.info(f"提交 {submission_id}: 404 (本批次累计 404={batch_not_found})")
+                    logger.info(f"提交 {submission_id} 不存在")
                 elif status == 'error' or status == 'no_match':
                     # 'error' 和 'no_match' 都不计入 404，也不收集
                     continue
                 else:  # status == 'ok'
                     submissions_data.append(data_tuple)
-                    logger.info(f"有效提交: {submission_id}")
-
+                    logger.info(f"添加有效提交: {submission_id}, 数据: {data_tuple}")
+            
             # 3. 本批次结束后，统一扣减 not_found_count
             not_found_count -= batch_not_found
             if batch_not_found > 0:
@@ -231,30 +257,5 @@ def process_submission_range(start_id, end_id, target_contest_id, cache, task_id
                 logger.warning(f"{task_id} 被系统关闭")
                 return 'paused', []
 
-    logger.info(f"{task_id} down 完成")
-    return 'completed', submissions_data
-
-def run(start_id, end_id, contest_id, task_id, progress_callback=None, should_cancel=None, should_pause=None):
-    """主运行函数：收集指定比赛范围内的提交数据"""
-    if not all(isinstance(x, int) for x in [start_id, end_id, contest_id]):
-        logger.error("参数类型错误：所有ID必须是整数")
-        return 'error', []
-    
-    if start_id > end_id:
-        logger.error("起始ID大于结束ID")
-        return 'error', []
-    
-    # 初始化会话和缓存
-    session = create_session()
-    cache = get_cache()
-    
-    # 处理提交范围
-    status, submissions_data = process_submission_range(
-        start_id, end_id, contest_id, cache, task_id, session,
-        progress_callback, should_cancel, should_pause
-    )
-    
-    # 关闭缓存
-    cache.close()
-    
-    return status, submissions_data
+    logger.info(f"{task_id} down 完成，收集到的数据: {submissions_data[:5]}...")  # 只显示前5条数据
+    return 'completed', submissions_data, problem_map
