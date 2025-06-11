@@ -16,7 +16,7 @@ down:
     backoff_factor: 0.5
     status_forcelist: [500, 502, 503, 504]
   cache:
-    expire: 3600  # 缓存过期时间（秒）
+    expire: 100000  # 缓存过期时间（秒）
     timeout: 1    # 缓存操作超时时间（秒）
     retry: true   # 是否启用重试机制
 
@@ -36,7 +36,7 @@ log:
   backup_count: 5
 
 models:
-  save_minute: 10
+  save_minute: 60
 
 task:
   savetime: 600
