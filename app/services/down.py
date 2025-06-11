@@ -165,16 +165,19 @@ def run(start_id, end_id, target_contest_id, task_id, progress_callback=None, sh
     """主运行函数：收集指定比赛范围内的提交数据"""
     if not all(isinstance(x, int) for x in [start_id, end_id, target_contest_id]):
         logger.error("参数类型错误：所有ID必须是整数")
-        return 'error', []
+        return 'error', [],{}
     
+    if start_id>end_id:
+        logger.warning("发现 l>r")
+        return 'error',[],{}
     # 创建会话
     session = create_session()
     
     # 获取比赛的所有问题ID和名称
     problem_map = get_contest_problems(session, target_contest_id)
     if not problem_map:
-        logger.error(f"无法获取比赛 {target_contest_id} 的问题列表")
-        return 'error', []
+        logger.warning(f"无法获取比赛 {target_contest_id} 的问题列表")
+        return 'completed', [],{}
     
     # 创建缓存
     cache = get_cache()

@@ -12,7 +12,7 @@ def run(start_id, end_id, cid, task_id, progress_callback=None,should_cancel=Non
     # 1. 获取提交数据
     status,submission_data,problem_map = down(start_id, end_id, cid, task_id, progress_callback,should_cancel,should_pause)
     if status != 'completed':
-        return status,[]
+        return status,''
     
     logger.info(f"任务 {task_id} 开始分析数据")
     # 2. 分析数据生成DataFrame

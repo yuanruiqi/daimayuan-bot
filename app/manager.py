@@ -66,7 +66,7 @@ def run_in_background(start_id, end_id, cid, task_id):
             tasks[task_id].status = "paused"
             tasks[task_id].progress = 0
     except Exception as e:
-        logger.error(f"后台任务出错: {e}")
+        logger.error(f"后台任务出错: {type(e)}: {e}")
         tasks[task_id].status = "error"
         tasks[task_id].error = str(e)
     finally:
