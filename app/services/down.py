@@ -88,7 +88,7 @@ def get_contest_problems(session, contest_id):
             continue
     return problem_map
 
-def process_single_submission(session, submission_id, target_contest_id, cache):
+def process_single_submission(session, submission_id, target_contest_id, cache,contest_problems):
     """处理单个提交，包含缓存逻辑"""
     cache_key = f"submission_{submission_id}"
     
@@ -129,12 +129,6 @@ def process_single_submission(session, submission_id, target_contest_id, cache):
         # 从链接中提取问题ID
         href = problem_link['href']
         problem_id = int(href.split('/problem/')[1])
-        
-        # 获取比赛的所有问题ID
-        contest_problems = get_contest_problems(session, target_contest_id)
-        if not contest_problems:
-            logger.error(f"无法获取比赛 {target_contest_id} 的问题列表")
-            return None, 'error'
         
         # 检查问题是否属于目标比赛
         if problem_id not in contest_problems:
@@ -197,6 +191,12 @@ def run(start_id, end_id, target_contest_id, task_id, progress_callback=None, sh
     batch_size = CONFIG['down']['batch_size']
     num_batches = math.ceil(len(id_list) / batch_size)
 
+    # 获取比赛的所有问题ID
+    contest_problems = get_contest_problems(session, target_contest_id)
+    if not contest_problems:
+        logger.error(f"无法获取比赛 {target_contest_id} 的问题列表")
+        return None, 'error'
+
     with ThreadPoolExecutor(max_workers=batch_size) as executor:
         for batch_idx in range(num_batches):
             batch_start = batch_idx * batch_size
@@ -210,7 +210,8 @@ def run(start_id, end_id, target_contest_id, task_id, progress_callback=None, sh
                     session,
                     submission_id,
                     target_contest_id,
-                    cache
+                    cache,
+                    contest_problems
                 ): (idx, submission_id)
                 for idx, submission_id in batch
             }
