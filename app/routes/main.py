@@ -40,8 +40,18 @@ def waiting():
 @main_bp.route("/progress")
 def progress():
     task_id = session.get('task_id')
-    if task_id and task_id in app.manager.task_progress:
-        return json.dumps(app.manager.task_progress[task_id])
+    if task_id and task_id in app.manager.tasks:
+        task = app.manager.tasks[task_id]
+        return json.dumps({
+            "progress": task.progress,
+            "status": task.status,
+            "current": task.current,
+            "start": task.start,
+            "end": task.end,
+            "contest_id": task.contest_id,
+            "createtime": task.createtime,
+            "donetime": task.donetime
+        })
     return json.dumps({"progress": 0, "status": "not_started"})
 
 @main_bp.route("/result")
@@ -60,6 +70,6 @@ def show_404_page(e):
 
 @main_bp.route("/task/<task_id>")
 def visit_by_taskid(task_id):
-    if not app.manager.task_progress.get(task_id,None):
+    if not app.manager.tasks.get(task_id,None):
         abort(404)
     

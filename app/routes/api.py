@@ -9,17 +9,17 @@ api_bp = Blueprint('api', __name__)
 @api_bp.route("/api/tasks")
 def get_tasks():
     tasks = []
-    for task_id in app.manager.task_progress.keys():
-        progress = app.manager.task_progress[task_id]
+    for task_id in app.manager.tasks.keys():
+        task = app.manager.tasks[task_id]
         tasks.append({
             "id": task_id,
-            "status": progress["status"],
-            "progress": progress["progress"],
-            "start": progress["start"],
-            "end": progress["end"],
-            "current": progress["current"],
-            "contest_id": progress["contest_id"],
-            "remaining": round(config.task.savetime - (time.time() - progress["donetime"]), 2)
+            "status": task.status,
+            "progress": task.progress,
+            "start": task.start,
+            "end": task.end,
+            "current": task.current,
+            "contest_id": task.contest_id,
+            "remaining": round(config.task.savetime - (time.time() - task.donetime), 2)
         })
     tasks.sort(key=lambda x: x["remaining"], reverse=True)
     return jsonify(tasks=tasks, tottime=config.task.savetime)

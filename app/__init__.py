@@ -12,12 +12,19 @@ def setup_logger():
     file_handler = RotatingFileHandler(
         config.log.file,
         maxBytes=config.log.max_bytes,
-        backupCount=config.log.backup_count
+        backupCount=config.log.backup_count,
+        encoding='utf-8'  # 添加UTF-8编码
     )
     file_handler.setFormatter(logging.Formatter(config.log.format))
     
+    # 添加控制台处理器
+    console_handler = logging.StreamHandler()
+    console_handler.setFormatter(logging.Formatter(config.log.format))
+    console_handler.setLevel(config.log.level)
+    
     # 添加到logger
     logger.addHandler(file_handler)
+    logger.addHandler(console_handler)
     return logger
 
 def mkdir():

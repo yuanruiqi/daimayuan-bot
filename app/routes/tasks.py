@@ -11,16 +11,16 @@ logger = logging.getLogger(__name__)
 @tasks_bp.route("/tasklist")
 def task_list():
     tasks = []
-    for task_id in app.manager.task_progress.keys():
-        progress = app.manager.task_progress[task_id]
+    for task_id in app.manager.tasks.keys():
+        task = app.manager.tasks[task_id]
         tasks.append({
             "id": task_id,
-            "status": progress["status"],
-            "progress": progress["progress"],
-            "start": progress["start"],
-            "end": progress["end"],
-            "current": progress["current"],
-            "remaining": round(config.task.savetime - (time.time() - progress["donetime"]), 2)
+            "status": task.status,
+            "progress": task.progress,
+            "start": task.start,
+            "end": task.end,
+            "current": task.current,
+            "remaining": round(config.task.savetime - (time.time() - task.donetime), 2)
         })
     tasks.sort(key=lambda x: x["remaining"], reverse=True)
     logger.info(f"有用户试图访问tasklist，共{len(tasks)} 个数据")
@@ -29,7 +29,7 @@ def task_list():
 @tasks_bp.route("/selecttask", methods=["POST"])
 def select_task():
     task_id = request.form.get("task_id")
-    if task_id not in app.manager.task_progress:
+    if task_id not in app.manager.tasks:
         abort(404)
     
     session['task_id'] = task_id
