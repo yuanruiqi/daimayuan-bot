@@ -68,7 +68,6 @@ def get_contest_problems(session, contest_id):
     url = f"http://oj.daimayuan.top/contest/{contest_id}"
     response = session.get(url)
 
-    print(response.text)
     if response.status_code != 200:
         return None
     
