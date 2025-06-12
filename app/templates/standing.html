@@ -829,17 +829,8 @@
         </div>
       </div>
     </div>
-    <!-- <span style="text-align: center;">将鼠标移到分数上查看提交记录，点击id跳转。</span> -->
-    <div class="card">
-      <div class="table-container">
-        <!-- 表格内容将由后端模板渲染 -->
-        {{table_html}}
-      </div>
-    </div>
-
     <!-- 添加时间轴滑动条 -->
     <div class="card timeline-container">
-      <h3 class="timeline-title">历史时刻</h3>
       <div class="timeline-controls">
         <button id="prevSnapshot" class="timeline-btn" title="上一个时刻">◀</button>
         <div class="timeline-slider-container">
@@ -853,6 +844,8 @@
             <option value="0.5">0.5x</option>
             <option value="1" selected>1x</option>
             <option value="2">2x</option>
+            <option value="3">3x</option>
+            <option value="64">?x</option>
           </select>
         </div>
         <div class="animation-control">
@@ -866,6 +859,13 @@
       <div class="timeline-info">
         <span id="currentTime">当前提交: </span>
         <span id="currentSubmission">提交编号: </span>
+      </div>
+    </div>
+    <!-- <span style="text-align: center;">将鼠标移到分数上查看提交记录，点击id跳转。</span> -->
+    <div class="card">
+      <div class="table-container">
+        <!-- 表格内容将由后端模板渲染 -->
+        {{table_html}}
       </div>
     </div>
     
@@ -1190,6 +1190,23 @@
     // 播放按钮事件
     playPauseBtn.addEventListener('click', togglePlay);
     
+
+    function triggerAnimationOnce(el, className) {
+      if (!el || !className) return;
+
+      // 如果已经在动画中，不重复添加类
+      if (el.classList.contains(className)) return;
+
+      // 强制触发重绘，再添加类
+      el.classList.remove(className); // 保证状态干净
+      requestAnimationFrame(() => {
+          el.classList.add(className);
+
+          el.addEventListener('animationend', () => {
+              el.classList.remove(className);
+          }, { once: true });
+      });
+    }
     // 更新表格数据并添加动画效果
     function updateTableData(submissionId) {
         const table = document.getElementById('rank-table');
@@ -1248,15 +1265,7 @@
                 const newScore = parseFloat(span.textContent) || 0;
                 if (newScore !== oldScore) {
                     // pulse 动画
-                    span.classList.remove('score-change');
-                    void span.offsetWidth;
-                    span.classList.add('score-change');
-                    span.addEventListener('animationend', () =>
-                        span.classList.remove('score-change'),
-                        { once: true }
-                    );
-                    console.log(oldScore);
-                    console.log(newScore);
+                    triggerAnimationOnce(span, 'score-change');
                 }
             });
         });
@@ -1276,15 +1285,8 @@
             const oldTotal = currentTotalScores.get(username) || 0;
             totalSpan.textContent = total;
             if (total !== oldTotal) {
-                totalSpan.classList.remove('score-change');
-                void totalSpan.offsetWidth;
-                totalSpan.classList.add('score-change');
+              triggerAnimationOnce(totalSpan, 'score-change');
                 
-                totalSpan.addEventListener('animationend', () =>
-                    totalSpan.classList.remove('score-change'),
-                    { once: true }
-                );
-                console.log(`用户 ${username} 的总分由 ${oldTotal} 分变为 ${total} 分`);
             }
         });
 
@@ -1325,8 +1327,8 @@
                 if (oldIdx !== newIdx) {
                     const dist = (oldIdx - newIdx) * row.offsetHeight;
                     row.style.setProperty('--move-distance', `${dist}px`);
-                    row.classList.add(oldIdx > newIdx ? 'rank-up' : 'rank-down');
-                    row.addEventListener('animationend', () => row.classList.remove('rank-up','rank-down'),{ once:true });
+                    const className = oldIdx > newIdx ? 'rank-up' : 'rank-down';
+                    triggerAnimationOnce(row, className);
                 }
             });
         }
