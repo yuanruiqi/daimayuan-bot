@@ -1,0 +1,8 @@
+bs4
+diskcache
+flask
+jinja2
+pandas
+pyyaml
+python-box
+requests
