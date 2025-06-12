@@ -766,6 +766,18 @@
     animation: rankUp 0.45s ease-in-out;
   }
 
+  @keyframes scoreChange {
+    0% { background-color: transparent; }
+    10%   { transform: scale(2);background-color: rgb(246, 255, 0); }
+    100% { background-color: transparent; }
+  }
+
+  .score-change {
+    display: inline-block;  
+    animation: scoreChange 0.45s ease-out;
+  }
+
+
   /* 响应式调整 */
   @media (max-width: 768px) {
     .timeline-controls {
@@ -1178,161 +1190,153 @@
     // 播放按钮事件
     playPauseBtn.addEventListener('click', togglePlay);
     
-    // 更新表格数据
+    // 更新表格数据并添加动画效果
     function updateTableData(submissionId) {
         const table = document.getElementById('rank-table');
-        const rows = table.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
-        
-        // 保存当前排名
+        const tbody = table.tBodies[0];
+        const rows = Array.from(tbody.rows);
+
+        // 保存当前排名与分数（包括每题得分）
         const currentRankings = new Map();
-        for (let row of rows) {
+        const currentTotalScores = new Map();
+        const currentProblemScores = new Map(); // key: username|problemId
+        const headerCells = Array.from(table.tHead.rows[0].cells);
+        const problemCols = headerCells
+            .map((th, idx) => ({ pid: th.textContent.split('：')[0].trim(), idx }))
+            .filter(item => item.idx > 1 && item.idx < headerCells.length - 1);
+
+        rows.forEach(row => {
             const username = row.querySelector('.username-cell').textContent;
-            const rank = parseInt(row.querySelector('.rank-cell').textContent);
-            currentRankings.set(username, rank);
-        }
-        
+            currentRankings.set(username, parseInt(row.querySelector('.rank-cell').textContent, 10));
+            // 总分
+            const totalIdx = headerCells.length - 1;
+            const total = parseFloat(row.cells[totalIdx].querySelector('.score-text').textContent) || 0;
+            currentTotalScores.set(username, total);
+            // 每题分数
+            problemCols.forEach(({ pid, idx }) => {
+                const val = parseFloat(row.cells[idx].querySelector('.score-text').textContent) || 0;
+                currentProblemScores.set(`${username}|${pid}`, val);
+            });
+        });
+
         // 重置所有分数
-        for (let row of rows) {
-            const cells = row.getElementsByClassName('score-cell');
-            for (let cell of cells) {
-                const scoreText = cell.querySelector('.score-text');
-                if (scoreText) {
-                    scoreText.textContent = '0';
-                }
+        rows.forEach(row => {
+            problemCols.forEach(({ idx }) => {
+                const span = row.cells[idx].querySelector('.score-text');
+                if (span) span.textContent = '0';
+            });
+        });
+
+        // 按时间线数据更新分数
+        const endIndex = timelineData.findIndex(item => item.submissionId === submissionId);
+        timelineData.slice(0, endIndex + 1).forEach(item => {
+            const row = rows.find(r => r.querySelector('.username-cell').textContent === item.username);
+            const col = problemCols.find(pc => pc.pid === item.problemId);
+            if (row && col) {
+                const span = row.cells[col.idx].querySelector('.score-text');
+                if (span) span.textContent = item.score;
             }
-        }
-        
-        // 更新到指定提交ID时的分数
-        for (let i = 0; i <= timelineData.findIndex(item => item.submissionId === submissionId); i++) {
-            const item = timelineData[i];
-            for (let row of rows) {
-                const usernameCell = row.querySelector('.username-cell');
-                if (usernameCell && usernameCell.textContent === item.username) {
-                    const cells = row.getElementsByClassName('score-cell');
-                    for (let cell of cells) {
-                        const problemId = cell.closest('table').querySelectorAll('thead th')[cell.cellIndex].textContent.split('：')[0];
-                        if (problemId === item.problemId) {
-                            const scoreText = cell.querySelector('.score-text');
-                            if (scoreText) {
-                                scoreText.textContent = item.score;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        
-        // 重新计算总分
-        const userScores = new Map();
-        for (let row of rows) {
-            const cells = row.getElementsByClassName('score-cell');
-            let total = 0;
-            for (let cell of cells) {
-                const scoreText = cell.querySelector('.score-text');
-                if (scoreText) {
-                    total += parseFloat(scoreText.textContent) || 0;
-                }
-            }
+        });
+
+        // 每题分数变化动画
+        rows.forEach(row => {
             const username = row.querySelector('.username-cell').textContent;
-            userScores.set(username, total);
-            const totalCell = row.cells[row.cells.length - 1];
-            if (totalCell) {
-                totalCell.querySelector('.score-text').textContent = total;
-            }
-        }
-        
-        // 计算新排名
-        const sortedUsers = Array.from(userScores.entries())
-            .sort((a, b) => b[1] - a[1]);
-        
-        // 更新排名并重新排序表格行
-        const tbody = table.getElementsByTagName('tbody')[0];
-        const newRows = [];
-        
-        for (let i = 0; i < sortedUsers.length; i++) {
-            const [username, score] = sortedUsers[i];
-            const row = Array.from(rows).find(r => r.querySelector('.username-cell').textContent === username);
-            if (row) {
-                const rankCell = row.querySelector('.rank-cell');
-                if (rankCell) {
-                    rankCell.textContent = (i + 1).toString();
+            problemCols.forEach(({ pid, idx }) => {
+                const span = row.cells[idx].querySelector('.score-text');
+                if (!span) return;
+                const oldScore = currentProblemScores.get(`${username}|${pid}`) || 0;
+                const newScore = parseFloat(span.textContent) || 0;
+                if (newScore !== oldScore) {
+                    // pulse 动画
+                    span.classList.remove('score-change');
+                    void span.offsetWidth;
+                    span.classList.add('score-change');
+                    span.addEventListener('animationend', () =>
+                        span.classList.remove('score-change'),
+                        { once: true }
+                    );
+                    console.log(oldScore);
+                    console.log(newScore);
                 }
+            });
+        });
+
+        // 重新计算总分并检测变化
+        const newTotalScores = new Map();
+        rows.forEach(row => {
+            const username = row.querySelector('.username-cell').textContent;
+            let total = 0;
+            problemCols.forEach(({ idx }) => {
+                total += parseFloat(row.cells[idx].querySelector('.score-text').textContent) || 0;
+            });
+            newTotalScores.set(username, total);
+            // 更新总分单元格
+            const totalCell = row.cells[headerCells.length - 1];
+            const totalSpan = totalCell.querySelector('.score-text');
+            const oldTotal = currentTotalScores.get(username) || 0;
+            totalSpan.textContent = total;
+            if (total !== oldTotal) {
+                totalSpan.classList.remove('score-change');
+                void totalSpan.offsetWidth;
+                totalSpan.classList.add('score-change');
+                
+                totalSpan.addEventListener('animationend', () =>
+                    totalSpan.classList.remove('score-change'),
+                    { once: true }
+                );
+                console.log(`用户 ${username} 的总分由 ${oldTotal} 分变为 ${total} 分`);
+            }
+        });
+
+        // 计算新排名
+        const sorted = Array.from(newTotalScores.entries()).sort((a, b) => b[1] - a[1]);
+        const oldPositions = new Map(); rows.forEach((r, i) => oldPositions.set(r.querySelector('.username-cell').textContent, i));
+
+        // 更新排名并重排
+        const newRows = [];
+        sorted.forEach(([username], rank) => {
+            const row = rows.find(r => r.querySelector('.username-cell').textContent === username);
+            if (row) {
+                row.querySelector('.rank-cell').textContent = (rank + 1).toString();
                 newRows.push(row);
             }
-        }
-        
-        // 保存旧位置用于动画
-        const oldPositions = new Map();
-        Array.from(rows).forEach((row, index) => {
-            oldPositions.set(row.querySelector('.username-cell').textContent, index);
         });
-        
-        // 重新排序表格行
-        newRows.forEach(row => {
-            tbody.appendChild(row);
-        });
-        
-        // 重新应用分数颜色
-        document.querySelectorAll('#rank-table tbody td.score-cell').forEach(cell => {
-            const scoreSpan = cell.querySelector('.score-text');
-            if (scoreSpan) {
-                const score = parseFloat(scoreSpan.textContent);
-                const username = cell.parentElement.cells[1].textContent;
-                const ths = cell.closest('table').querySelectorAll('thead th');
-                const problemName = ths[cell.cellIndex].textContent.trim();
-                const isTotalScore = cell.cellIndex === cell.parentElement.cells.length - 1;
-                const maxScore = isTotalScore ? 300 : 100;
-                cell.setAttribute('data-max', maxScore);
-                
-                if (score < 0) {
-                    scoreSpan.style.color = '#95a5a6';
-                } else {
-                    let percent = Math.max(0, Math.min(1, score / maxScore));
-                    scoreSpan.style.color = colorScale(percent * 100).hex();
-                    scoreSpan.style.background = '';
-                    scoreSpan.style.backgroundClip = '';
-                    scoreSpan.style.webkitBackgroundClip = '';
-                }
+        newRows.forEach(r => tbody.appendChild(r));
 
-                // 更新工具提示
-                cell.setAttribute('data-bs-toggle', 'tooltip');
-                cell.setAttribute('title', `${username} 此时在 ${problemName} 的得分: ${score}分`);
-            }
+        // 颜色渲染
+        newRows.forEach(row => {
+            const username = row.querySelector('.username-cell').textContent;
+            problemCols.concat({ pid: 'total', idx: headerCells.length - 1 }).forEach(({ idx }) => {
+                const span = row.cells[idx].querySelector('.score-text');
+                if (!span) return;
+                const score = parseFloat(span.textContent) || 0;
+                const max = (idx === headerCells.length - 1) ? 300 : 100;
+                const p = Math.max(0, Math.min(1, score / max));
+                span.style.color = colorScale(p * 100).hex();
+                span.style.background = '';
+            });
         });
-        
-        // 应用排名变动动画
-        if (animationToggle.checked && lastRankings.size > 0) {
-            newRows.forEach((row, newIndex) => {
+
+        // 排名动画
+        if (animationToggle.checked && currentRankings.size) {
+            newRows.forEach((row, newIdx) => {
                 const username = row.querySelector('.username-cell').textContent;
-                const oldIndex = oldPositions.get(username);
-                
-                if (oldIndex !== undefined && oldIndex !== newIndex) {
-                    const moveDistance = (oldIndex - newIndex) * row.offsetHeight;
-                    row.style.setProperty('--move-distance', `${moveDistance}px`);
-                    if(oldIndex>newIndex){
-                      row.classList.add('rank-up');
-                    }else{
-                      row.classList.add('rank-down');
-                    }
-                    
-                    // 动画结束后移除类
-                    row.addEventListener('animationend', () => {
-                        if(oldIndex>newIndex)row.classList.remove('rank-up');
-                        else row.classList.remove('rank-down')
-                    }, { once: true });
+                const oldIdx = oldPositions.get(username);
+                if (oldIdx !== newIdx) {
+                    const dist = (oldIdx - newIdx) * row.offsetHeight;
+                    row.style.setProperty('--move-distance', `${dist}px`);
+                    row.classList.add(oldIdx > newIdx ? 'rank-up' : 'rank-down');
+                    row.addEventListener('animationend', () => row.classList.remove('rank-up','rank-down'),{ once:true });
                 }
             });
         }
-        
-        // 更新上一次的排名
-        lastRankings = new Map(currentRankings);
 
-        // 重新初始化工具提示
-        $('[data-bs-toggle="tooltip"]').tooltip('dispose').tooltip({
-            trigger: 'hover',
-            placement: 'top'
-        });
+        // 重置提示
+        $('[data-bs-toggle="tooltip"]').tooltip('dispose').tooltip({ trigger:'hover', placement:'top' });
+        lastRankings = new Map(currentRankings);
     }
+
+
     
     // 更新显示信息
     function updateTimelineInfo() {
