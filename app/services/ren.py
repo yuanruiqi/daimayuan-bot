@@ -10,8 +10,25 @@ def run(df, startid, endid, cid, name_order, submission_history, problem_map):
 
     df = prepare_data(df)
     df_sorted = sort_and_rank(df)
-    table_html = render_table(df_sorted,name_order, submission_history, problem_map)
-    html = build_html(table_html, startid, endid, cid)
+    
+    # 处理时间轴数据
+    timeline_data = []
+    for username, problems in submission_history.items():
+        for problem_id, submissions in problems.items():
+            for sub_id, score in submissions:
+                timeline_data.append({
+                    'time': sub_id,  # 使用提交ID作为时间点
+                    'submissionId': str(sub_id),
+                    'username': username,
+                    'problemId': str(problem_id),
+                    'score': score
+                })
+    
+    # 按提交ID排序
+    timeline_data.sort(key=lambda x: x['time'])
+    
+    table_html = render_table(df_sorted, name_order, submission_history, problem_map)
+    html = build_html(table_html, startid, endid, cid, timeline_data)
     logger.info(f"{startid},{endid},{cid},已生成 HTML")
     return html
 
@@ -26,7 +43,7 @@ def sort_and_rank(df):
     df.insert(0, '排名', range(1, len(df) + 1))
     return df
 
-def build_html(table_html, startid, endid, cid):
+def build_html(table_html, startid, endid, cid, timeline_data):
     with open(CONFIG['general']['outtemplate'], 'r', encoding='utf-8') as f:
         html_template = f.read()
     template = Template(html_template)
@@ -34,7 +51,8 @@ def build_html(table_html, startid, endid, cid):
         table_html=table_html,
         startid=startid,
         endid=endid,
-        cid=cid
+        cid=cid,
+        timeline_data=timeline_data
     )
 
 def render_table(df, name_order, submission_history, problem_map):
@@ -82,9 +100,12 @@ def render_table(df, name_order, submission_history, problem_map):
                             f'</div>'
                         )
                     history_info = f'<div class="submission-history">{chr(10).join(history_html)}</div>'
-                
-                # 使用span包裹分数，以便应用渐变色
-                cell = f'<td class="score-cell">{history_info}<span class="score-text">{cell_value}</span></td>'
+                # 判断是否为数字分数列
+                try:
+                    sort_val = float(cell_value)
+                    cell = f'<td class="score-cell" data-sort="{sort_val}">{history_info}<span class="score-text">{cell_value}</span></td>'
+                except Exception:
+                    cell = f'<td class="score-cell">{history_info}<span class="score-text">{cell_value}</span></td>'
             html.append(cell)
         html.append('</tr>')
     html.append('</tbody></table>')

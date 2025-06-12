@@ -15,9 +15,60 @@ from app.config import CONFIG,config
 tasks = SaveDict("tasks", "./databuf/tasks.pkl")
 html = SaveDict("html", "./databuf/html.pkl")
 
-timers = []
-
 logger = logging.getLogger(__name__)
+
+# 清理线程控制
+cleanup_thread = None
+cleanup_running = False
+
+def cleanup_tasks():
+    """定期清理已完成或过期的任务"""
+    global cleanup_running
+    while cleanup_running:
+        try:
+            current_time = time.time()
+            tasks_to_remove = []
+            
+            # 检查所有任务
+            for task_id, task in tasks.items():
+                # 检查任务是否已完成且超过保存时间
+                if task.status in ['completed', 'cancelled', 'error']:
+                    if current_time - task.donetime >= config.task.savetime:
+                        tasks_to_remove.append(task_id)
+                # # 检查任务是否运行时间过长
+                # elif task.status == 'running' and current_time - task.createtime >= config.task.max_runtime:
+                #     task.status = 'error'
+                #     task.error = '任务运行超时'
+                #     tasks_to_remove.append(task_id)
+            
+            # 批量删除过期任务
+            for task_id in tasks_to_remove:
+                pop(task_id)
+                logger.info(f"清理过期任务: {task_id}")
+            
+            # 等待下一次清理
+            time.sleep(config.task.cleanup_interval)
+            
+        except Exception as e:
+            logger.error(f"任务清理过程出错: {e}")
+            time.sleep(config.task.cleanup_interval)
+
+def start_cleanup_thread():
+    """启动清理线程"""
+    global cleanup_thread, cleanup_running
+    if cleanup_thread is None or not cleanup_thread.is_alive():
+        cleanup_running = True
+        cleanup_thread = threading.Thread(target=cleanup_tasks, daemon=True)
+        cleanup_thread.start()
+        logger.info("任务清理线程已启动")
+
+def stop_cleanup_thread():
+    """停止清理线程"""
+    global cleanup_running
+    cleanup_running = False
+    if cleanup_thread and cleanup_thread.is_alive():
+        cleanup_thread.join(timeout=1)
+        logger.info("任务清理线程已停止")
 
 def init_shared_state(app):
     global tasks, html
@@ -29,6 +80,9 @@ def init_shared_state(app):
     # 初始化共享字典
     tasks = SaveDict("tasks", "./databuf/tasks.pkl")
     html = SaveDict("html", "./databuf/html.pkl")
+
+    # 启动清理线程
+    start_cleanup_thread()
 
     # 注册关闭的行为
     signal.signal(signal.SIGTERM, cleanup_on_shutdown)
@@ -71,9 +125,6 @@ def run_in_background(start_id, end_id, cid, task_id):
         tasks[task_id].error = str(e)
     finally:
         tasks[task_id].pause_flag = False
-        tl = threading.Timer(config.task.savetime, lambda: pop(task_id))
-        tl.start()
-        timers.append(tl)
 
 def update_progress_callback(task_id):
     def callback(current, total, current_id):
@@ -116,13 +167,9 @@ def restart_task(app):
                     start_task(task.start, task.end, 
                               task.contest_id, task_id, True)
                 elif task.status in ['completed', 'cancelled']:
-                    t = threading.Timer(
-                        max(0, config.task.savetime - 
-                        max(0, time.time() - task.donetime)), 
-                        lambda: pop(task_id)
-                    )
-                    t.start()
-                    timers.append(t)
+                    # 检查任务是否已经过期
+                    if time.time() - task.donetime >= config.task.savetime:
+                        deleted_tasks.append(task_id)
             except Exception as e:
                 logging.error(f"恢复任务{task_id}出错，{e}")
                 deleted_tasks.append(task_id)
@@ -168,18 +215,22 @@ def cancel_task(task_id):
     tasks[task_id].cancel_flag = True
     return jsonify(success=True, message="任务取消请求已发送")
 
-def cleanup_on_shutdown(signum=None, frame=None):
-    # 取消所有定时器
-    for t in timers:
-        try:
-            t.cancel()
-        except:
-            pass
-    # 关闭 SaveDict
-    for store in (tasks, html):
-        try:
-            store.close()
-        except:
-            pass
-    print("Exit called,SystemExit will be throwed")
+def cleanup_on_shutdown(signum, frame):
+    """程序关闭时的清理工作"""
+    logger.info("正在关闭程序...")
+    
+    # 停止清理线程
+    stop_cleanup_thread()
+    
+    # 保存所有任务状态
+    try:
+        for store in (tasks, html):
+            try:
+                store.close()
+            except Exception as e:
+                logger.error(f"保存{store.name}时出错: {e}")
+    except Exception as e:
+        logger.error(f"保存任务状态时出错: {e}")
+    
+    logger.info("程序已安全关闭")
     sys.exit(0)
