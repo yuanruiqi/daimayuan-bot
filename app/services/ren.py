@@ -82,9 +82,12 @@ def render_table(df, name_order, submission_history, problem_map):
                             f'</div>'
                         )
                     history_info = f'<div class="submission-history">{chr(10).join(history_html)}</div>'
-                
-                # 使用span包裹分数，以便应用渐变色
-                cell = f'<td class="score-cell">{history_info}<span class="score-text">{cell_value}</span></td>'
+                # 判断是否为数字分数列
+                try:
+                    sort_val = float(cell_value)
+                    cell = f'<td class="score-cell" data-sort="{sort_val}">{history_info}<span class="score-text">{cell_value}</span></td>'
+                except Exception:
+                    cell = f'<td class="score-cell">{history_info}<span class="score-text">{cell_value}</span></td>'
             html.append(cell)
         html.append('</tr>')
     html.append('</tbody></table>')

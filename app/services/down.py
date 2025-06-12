@@ -8,6 +8,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 import logging
 import time
 import os
+from functools import lru_cache
 
 from app.config import CONFIG
 
@@ -36,35 +37,14 @@ def create_session():
     # 设置cookies
     if CONFIG['down']['cookies']:
         session.cookies.update(CONFIG['down']['cookies'])
+    else:
+        logger.warning("没有设置 cookies")
     
     return session
 
-def get_cache():
-    """创建并配置缓存"""
-    # 确保缓存目录存在
-    cache_dir = CONFIG['general']['cache_dir']
-    if not os.path.exists(cache_dir):
-        os.makedirs(cache_dir)
-    
-    cache_config = CONFIG['down']['cache']
-    return Cache(
-        cache_dir,
-        timeout=cache_config['timeout'],
-        retry=cache_config['retry']
-    )
-
-def fetch_submission(session,submission_id):
-    """获取单个提交的页面内容"""
-    url = f"{CONFIG['down']['base_url']}{submission_id}"
-    try:
-        response = session.get(url, timeout=CONFIG['down']['timeout'])
-        return response
-    except requests.RequestException as e:
-        logger.error(f"获取提交{submission_id}失败: {e}")
-        return None
-
+@lru_cache(maxsize=1000)
 def get_contest_problems(session, contest_id):
-    """获取比赛中的所有问题ID和题目名称"""
+    """获取比赛中的所有问题ID和题目名称（使用内存缓存）"""
     url = f"http://oj.daimayuan.top/contest/{contest_id}"
     response = session.get(url)
 
@@ -88,27 +68,48 @@ def get_contest_problems(session, contest_id):
             continue
     return problem_map
 
-def process_single_submission(session, submission_id, target_contest_id, cache,contest_problems):
+def get_cache():
+    """创建并配置缓存"""
+    # 确保缓存目录存在
+    cache_dir = CONFIG['general']['cache_dir']
+    if not os.path.exists(cache_dir):
+        os.makedirs(cache_dir)
+    
+    cache_config = CONFIG['down']['cache']
+    return Cache(
+        cache_dir,
+        timeout=cache_config['timeout'],
+        retry=cache_config['retry'],
+        size_limit=1024*1024*5,  # 5MB 缓存大小限制
+        eviction_policy='least-recently-used',  # LRU 缓存淘汰策略
+        disk_pickle_protocol=4  # 使用更高效的序列化协议
+    )
+
+def fetch_submission(session,submission_id):
+    """获取单个提交的页面内容"""
+    url = f"{CONFIG['down']['base_url']}{submission_id}"
+    try:
+        response = session.get(url, timeout=CONFIG['down']['timeout'])
+        return response
+    except requests.RequestException as e:
+        logger.error(f"获取提交{submission_id}失败: {e}")
+        return None
+
+def process_single_submission(session, submission_id, target_contest_id, cache, contest_problems):
     """处理单个提交，包含缓存逻辑"""
     cache_key = f"submission_{submission_id}"
     
     # 尝试从缓存获取
     try:
-        cached_data = cache.get(cache_key)
-        if cached_data is not None:
-            # logger.info(f"从缓存读取{submission_id}的数据: {cached_data}")
-            # 如果是旧的三元组格式，转换为四元组
-            # if len(cached_data[0]) == 3:
-            #     submission_id, username, problem_id = cached_data[0]
-            #     result = (submission_id, username, problem_id, -1)  # 添加默认分数0
-            #     logger.info(f"转换缓存数据为四元组: {result}")
-            #     return result, 'ok'
-            return cached_data
+        with cache.transact():  # 使用事务来确保原子性
+            cached_data = cache.get(cache_key)
+            if cached_data is not None:
+                return cached_data
     except Exception as e:
         logger.warning(f"从缓存读取{submission_id}失败: {e}")
     
     # 缓存未命中，获取新数据
-    response = fetch_submission(session,submission_id)
+    response = fetch_submission(session, submission_id)
     if response is None:
         return None, 'error'
     
@@ -148,11 +149,11 @@ def process_single_submission(session, submission_id, target_contest_id, cache,c
         
         # 构建结果
         result = (submission_id, username, problem_id, score)
-        # logger.info(f"处理提交{submission_id}的结果: {result}")
         
         # 存入缓存
         try:
-            cache.set(cache_key, (result, 'ok'), expire=CONFIG['down']['cache']['expire'])
+            with cache.transact():  # 使用事务来确保原子性
+                cache.set(cache_key, (result, 'ok'), expire=CONFIG['down']['cache']['expire'])
         except Exception as e:
             logger.warning(f"写入缓存{submission_id}失败: {e}")
         
@@ -170,10 +171,11 @@ def run(start_id, end_id, target_contest_id, task_id, progress_callback=None, sh
     if start_id>end_id:
         logger.warning("发现 l>r")
         return 'error',[],{}
+    
     # 创建会话
     session = create_session()
     
-    # 获取比赛的所有问题ID和名称
+    # 获取比赛的所有问题ID和名称（使用缓存）
     problem_map = get_contest_problems(session, target_contest_id)
     if not problem_map:
         logger.warning(f"无法获取比赛 {target_contest_id} 的问题列表")
@@ -194,12 +196,6 @@ def run(start_id, end_id, target_contest_id, task_id, progress_callback=None, sh
     batch_size = CONFIG['down']['batch_size']
     num_batches = math.ceil(len(id_list) / batch_size)
 
-    # 获取比赛的所有问题ID
-    contest_problems = get_contest_problems(session, target_contest_id)
-    if not contest_problems:
-        logger.error(f"无法获取比赛 {target_contest_id} 的问题列表")
-        return None, 'error'
-
     with ThreadPoolExecutor(max_workers=batch_size) as executor:
         for batch_idx in range(num_batches):
             batch_start = batch_idx * batch_size
@@ -214,7 +210,7 @@ def run(start_id, end_id, target_contest_id, task_id, progress_callback=None, sh
                     submission_id,
                     target_contest_id,
                     cache,
-                    contest_problems
+                    problem_map  # 直接使用 problem_map，避免重复获取
                 ): (idx, submission_id)
                 for idx, submission_id in batch
             }
@@ -225,8 +221,6 @@ def run(start_id, end_id, target_contest_id, task_id, progress_callback=None, sh
                 idx, submission_id = futures[future]
                 try:
                     data_tuple, status = future.result()
-                    # logger.info(f"获取到提交{submission_id}的结果: data_tuple={data_tuple}, status={status}")
-                    # 更新进度
                     if progress_callback:
                         progress_callback(idx, total, submission_id)
                 except Exception as e:
@@ -235,15 +229,12 @@ def run(start_id, end_id, target_contest_id, task_id, progress_callback=None, sh
                     
                 if status == 'not_found':
                     batch_not_found += 1
-                    # logger.info(f"提交 {submission_id} 不存在")
                 elif status == 'error' or status == 'no_match':
-                    # 'error' 和 'no_match' 都不计入 404，也不收集
                     continue
                 else:  # status == 'ok'
                     submissions_data.append(data_tuple)
-                    # logger.info(f"添加有效提交: {submission_id}, 数据: {data_tuple}")
             
-            # 3. 本批次结束后，统一扣减 not_found_count
+            # 本批次结束后，统一扣减 not_found_count
             not_found_count -= batch_not_found
             if batch_not_found > 0:
                 logger.info(f"{task_id} 中批次共 {batch_not_found} 次 404，剩余可容忍 404 次数 = {not_found_count}")

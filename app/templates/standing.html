@@ -492,6 +492,27 @@
     white-space: normal;
     word-break: break-word;
   }
+
+  /* 添加排序样式 */
+  th.sort-asc::after {
+    content: ' ↑';
+    color: #fff;
+  }
+
+  th.sort-desc::after {
+    content: ' ↓';
+    color: #fff;
+  }
+
+  /* 分数列样式 */
+  td[data-sort] {
+    /* font-family: monospace; */
+    text-align: center;
+    padding-right: 20px;
+    font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    
+    
+  }
 </style>
 </head>
 <body>
@@ -578,12 +599,35 @@
   document.getElementById('timestamp').textContent = new Date().toLocaleString();
 
   document.addEventListener('DOMContentLoaded', function() {
-    // 初始化表格排序
-    new Tablesort(document.getElementById('rank-table'), {
-      descending: true,
-      sortAttribute: 'data-sort-value'
+    // 自定义分数排序函数
+    Tablesort.extend('score', function(item) {
+        return item.match(/^-?\d+$/);
+    }, function(a, b) {
+        a = parseInt(a);
+        b = parseInt(b);
+        return a - b;
     });
-    
+
+    // 初始化表格排序
+    const table = document.querySelector('table');
+    new Tablesort(table, {
+        descending: true,  // 默认降序
+        sortAttribute: 'data-sort',  // 使用data-sort属性
+        column: 0  // 默认按第一列排序
+    });
+
+    // 添加表头点击事件
+    document.querySelectorAll('th').forEach(th => {
+        th.addEventListener('click', function() {
+            // 移除其他表头的排序标记
+            document.querySelectorAll('th').forEach(h => {
+                h.classList.remove('sort-asc', 'sort-desc');
+            });
+            // 添加当前表头的排序标记
+            this.classList.add(this.classList.contains('sort-asc') ? 'sort-desc' : 'sort-asc');
+        });
+    });
+
     // 搜索功能
     document.getElementById('searchInput').addEventListener('input', function(e) {
       const searchTerm = e.target.value.toLowerCase().trim();
