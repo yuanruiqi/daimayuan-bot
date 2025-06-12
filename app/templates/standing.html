@@ -743,22 +743,78 @@
     }
   }
 
+  @keyframes rankUp {
+    0% {
+      transform: scale(1);
+      background-color: rgba(39, 174, 96, 0);
+    }
+    50% {
+      transform: scale(1.1);
+      background-color: rgba(39, 174, 96, 0.2);
+    }
+    100% {
+      transform: scale(1);
+      background-color: rgba(39, 174, 96, 0);
+    }
+  }
+
   .rank-animation {
     animation: rankChange 0.45s ease-in-out;
   }
 
-  /* 响应式调整 */
-  @media (max-width: 768px) {
-    .timeline-controls {
-      flex-wrap: wrap;
-      justify-content: center;
-    }
-    
-    .animation-control {
-      margin: 10px 0 0 0;
-      width: 100%;
-      justify-content: center;
-    }
+  .rank-up {
+    animation: rankUp 0.6s ease-in-out;
+  }
+
+  .rank-change-indicator {
+    position: absolute;
+    right: -25px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 14px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .rank-up-indicator {
+    color: #27ae60;
+  }
+
+  .rank-down-indicator {
+    color: #e74c3c;
+  }
+
+  .rank-cell {
+    position: relative;
+    font-weight: 700;
+    color: var(--primary-color);
+    transition: all 0.3s ease;
+  }
+
+  .rank-cell.rank-improved {
+    color: #27ae60;
+    font-weight: 800;
+  }
+
+  .rank-cell.rank-declined {
+    color: #e74c3c;
+  }
+
+  /* 添加排名变化箭头样式 */
+  .rank-change-arrow {
+    display: inline-block;
+    margin-left: 5px;
+    font-size: 12px;
+  }
+
+  .rank-up-arrow {
+    color: #27ae60;
+  }
+
+  .rank-down-arrow {
+    color: #e74c3c;
   }
 </style>
 </head>
@@ -875,304 +931,155 @@
 </div>
 
 <script>
-  document.getElementById('timestamp').textContent = new Date().toLocaleString();
+// 工具函数模块
+const Utils = {
+    formatNumber: (num) => num.toFixed(1),
+    parseScore: (text) => parseFloat(text) || 0,
+    debounce: (func, wait) => {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
+    }
+};
 
-  document.addEventListener('DOMContentLoaded', function() {
-    // 自定义分数排序函数
-    Tablesort.extend('score', function(item) {
-        return item.match(/^-?\d+$/);
-    }, function(a, b) {
-        a = parseInt(a);
-        b = parseInt(b);
-        return a - b;
-    });
+// 颜色管理模块
+const ColorManager = {
+    colorScale: chroma.scale(['#e74c3c', '#f39c12', '#27ae60']).domain([0, 50, 100]),
+    
+    getScoreColor(score, maxScore) {
+        if (score < 0) return '#95a5a6';
+        const percent = Math.max(0, Math.min(1, score / maxScore));
+        return this.colorScale(percent * 100).hex();
+    }
+};
 
-    // 初始化表格排序
-    const table = document.querySelector('table');
-    new Tablesort(table, {
-        descending: true,  // 默认降序
-        sortAttribute: 'data-sort',  // 使用data-sort属性
-        column: 0  // 默认按第一列排序
-    });
-
-    // 添加表头点击事件
-    document.querySelectorAll('th').forEach(th => {
-        th.addEventListener('click', function() {
-            // 移除其他表头的排序标记
-            document.querySelectorAll('th').forEach(h => {
-                h.classList.remove('sort-asc', 'sort-desc');
+// 表格管理模块
+const TableManager = {
+    table: null,
+    lastRankings: new Map(),
+    
+    init() {
+        this.table = document.getElementById('rank-table');
+        this.initTableSort();
+        this.initSearch();
+        this.initScoreCells();
+    },
+    
+    initTableSort() {
+        Tablesort.extend('score', function(item) {
+            return item.match(/^-?\d+$/);
+        }, function(a, b) {
+            return parseInt(a) - parseInt(b);
+        });
+        
+        new Tablesort(this.table, {
+            descending: true,
+            sortAttribute: 'data-sort',
+            column: 0
+        });
+        
+        this.initHeaderClick();
+    },
+    
+    initHeaderClick() {
+        document.querySelectorAll('th').forEach(th => {
+            th.addEventListener('click', function() {
+                document.querySelectorAll('th').forEach(h => {
+                    h.classList.remove('sort-asc', 'sort-desc');
+                });
+                this.classList.add(this.classList.contains('sort-asc') ? 'sort-desc' : 'sort-asc');
             });
-            // 添加当前表头的排序标记
-            this.classList.add(this.classList.contains('sort-asc') ? 'sort-desc' : 'sort-asc');
         });
-    });
-
-    // 搜索功能
-    document.getElementById('searchInput').addEventListener('input', function(e) {
-      const searchTerm = e.target.value.toLowerCase().trim();
-      const rows = document.querySelectorAll('#rank-table tbody tr');
-      rows.forEach(row => {
-        const username = row.cells[1].textContent.toLowerCase();
-        row.style.display = username.includes(searchTerm) ? '' : 'none';
-      });
-    });
-
-    // 提交历史交互
-    document.querySelectorAll('.score-cell').forEach(cell => {
-      const history = cell.querySelector('.submission-history');
-      if (history) {
-        // 点击单元格时显示历史记录
-        cell.addEventListener('click', function(e) {
-          e.stopPropagation();
-          const allHistories = document.querySelectorAll('.submission-history');
-          allHistories.forEach(h => {
-            if (h !== history) {
-              h.style.display = 'none';
-            }
-          });
-          history.style.display = history.style.display === 'none' ? 'block' : 'none';
+    },
+    
+    initSearch() {
+        const searchInput = document.getElementById('searchInput');
+        searchInput.addEventListener('input', Utils.debounce((e) => {
+            const searchTerm = e.target.value.toLowerCase().trim();
+            const rows = this.table.querySelectorAll('tbody tr');
+            rows.forEach(row => {
+                const username = row.cells[1].textContent.toLowerCase();
+                row.style.display = username.includes(searchTerm) ? '' : 'none';
+            });
+        }, 300));
+    },
+    
+    initScoreCells() {
+        this.table.querySelectorAll('tbody td.score-cell').forEach(cell => {
+            this.setupScoreCell(cell);
         });
-      }
-    });
-
-    // 点击页面其他地方时隐藏所有历史记录
-    document.addEventListener('click', function(e) {
-      if (!e.target.closest('.score-cell')) {
-        document.querySelectorAll('.submission-history').forEach(history => {
-          history.style.display = 'none';
-        });
-      }
-    });
-
-    // 分数颜色插值色带
-    const colorScale = chroma.scale(['#e74c3c', '#f39c12', '#27ae60']).domain([0, 50, 100]);
-    document.querySelectorAll('#rank-table tbody td.score-cell').forEach(cell => {
-      let scoreSpan = cell.querySelector('.score-text');
-      if (!scoreSpan) {
-        const val = cell.childNodes[0] && cell.childNodes[0].nodeType === 3 ? cell.childNodes[0].textContent : cell.textContent;
-        scoreSpan = document.createElement('span');
+    },
+    
+    setupScoreCell(cell) {
+        const scoreSpan = cell.querySelector('.score-text') || this.createScoreSpan(cell);
+        const score = Utils.parseScore(scoreSpan.textContent);
+        const username = cell.parentElement.cells[1].textContent;
+        const ths = cell.closest('table').querySelectorAll('thead th');
+        const problemName = ths[cell.cellIndex].textContent.trim();
+        const isTotalScore = cell.cellIndex === cell.parentElement.cells.length - 1;
+        const maxScore = isTotalScore ? 300 : 100;
+        
+        cell.setAttribute('data-max', maxScore);
+        this.updateScoreCellStyle(cell, score, maxScore);
+        this.setupTooltip(cell, username, problemName, score);
+    },
+    
+    createScoreSpan(cell) {
+        const scoreSpan = document.createElement('span');
         scoreSpan.className = 'score-text';
-        scoreSpan.textContent = val.trim();
-        if (cell.childNodes[0] && cell.childNodes[0].nodeType === 3) {
-          cell.childNodes[0].replaceWith(scoreSpan);
-        } else {
-          cell.innerHTML = '';
-          cell.appendChild(scoreSpan);
-        }
-      }
-      const score = parseFloat(scoreSpan.textContent);
-      const username = cell.parentElement.cells[1].textContent;
-      const ths = cell.closest('table').querySelectorAll('thead th');
-      const problemName = ths[cell.cellIndex].textContent.trim();
-      const isTotalScore = cell.cellIndex === cell.parentElement.cells.length - 1;
-      const maxScore = isTotalScore ? 300 : 100;
-      cell.setAttribute('data-max', maxScore);
-      if (score < 0) {
-        scoreSpan.style.color = '#95a5a6';
-      } else {
-        let percent = Math.max(0, Math.min(1, score / maxScore));
-        scoreSpan.style.color = colorScale(percent * 100).hex();
-        scoreSpan.style.background = '';
-        scoreSpan.style.backgroundClip = '';
-        scoreSpan.style.webkitBackgroundClip = '';
-      }
-      // 获取提交历史
-      const history = cell.querySelector('.submission-history');
-      if (history) {
-        const historyItems = history.querySelectorAll('.history-item');
-        let maxScore = -1;
-        let lastScore = -1;
-        historyItems.forEach(item => {
-          const itemScore = parseFloat(item.querySelector('.score').textContent);
-          if (itemScore > maxScore) {
-            maxScore = itemScore;
-          }
-          lastScore = itemScore;
-        });
-        cell.setAttribute('data-bs-toggle', 'tooltip');
-        if (maxScore >= 0) {
-          cell.setAttribute('title', `${username} 在 ${problemName} 的最高分: ${maxScore}分`);
-        } else {
-          cell.setAttribute('title', `${username} 在 ${problemName} 的得分: ${score}分`);
-        }
-      } else {
+        scoreSpan.textContent = cell.textContent.trim();
+        cell.innerHTML = '';
+        cell.appendChild(scoreSpan);
+        return scoreSpan;
+    },
+    
+    updateScoreCellStyle(cell, score, maxScore) {
+        const scoreSpan = cell.querySelector('.score-text');
+        scoreSpan.style.color = ColorManager.getScoreColor(score, maxScore);
+    },
+    
+    setupTooltip(cell, username, problemName, score) {
         cell.setAttribute('data-bs-toggle', 'tooltip');
         cell.setAttribute('title', `${username} 在 ${problemName} 的得分: ${score}分`);
-      }
-    });
-
-    // 初始化工具提示
-    $(function () {
-      $('[data-bs-toggle="tooltip"]').tooltip({
-        trigger: 'hover',
-        placement: 'top'
-      });
-    });
-
-    // 计算统计信息
-    const scores = Array.from(document.querySelectorAll('#rank-table tbody td:last-child'))
-      .map(td => parseFloat(td.textContent) || 0);
-
-    if (scores.length > 0) {
-      document.getElementById('totalCount').textContent = scores.length;
-      document.getElementById('maxScore').textContent = Math.max(...scores).toFixed(1);
-      const sum = scores.reduce((a, b) => a + b, 0);
-      document.getElementById('avgScore').textContent = (sum / scores.length).toFixed(1);
-      const sortedScores = [...scores].sort((a, b) => a - b);
-      const mid = Math.floor(sortedScores.length / 2);
-      const median = sortedScores.length % 2 !== 0 
-        ? sortedScores[mid] 
-        : (sortedScores[mid - 1] + sortedScores[mid]) / 2;
-      document.getElementById('medianScore').textContent = median.toFixed(1);
-      
-      // 绘制图表
-      const ctx = document.getElementById('scoreDistributionChart').getContext('2d');
-      const maxScore = Math.max(...scores);
-      const binCount = 10;
-      const binSize = Math.ceil(maxScore / binCount);
-      const scoreRanges = [];
-      for (let i = 0; i < binCount; i++) {
-        const start = i * binSize;
-        const end = (i + 1) * binSize;
-        scoreRanges.push(`${start}-${end}`);
-      }
-      const data = new Array(binCount).fill(0);
-      scores.forEach(score => {
-        const binIndex = Math.min(Math.floor(score / binSize), binCount - 1);
-        data[binIndex]++;
-      });
-
-      new Chart(ctx, {
-        type: 'bar',
-        data: {
-          labels: scoreRanges,
-          datasets: [{
-            label: '分数分布',
-            data: data,
-            backgroundColor: 'rgba(44, 111, 187, 0.7)',
-            borderColor: 'rgba(44, 111, 187, 1)',
-            borderWidth: 1
-          }]
-        },
-        options: {
-          responsive: true,
-          plugins: {
-            legend: { display: false },
-            title: { 
-              display: true, 
-              text: '总分分布', 
-              font: { size: 16 },
-              color: '#2c3e50'
-            }
-          },
-          scales: {
-            y: { 
-              beginAtZero: true, 
-              title: { 
-                display: true, 
-                text: '人数',
-                color: '#2c3e50'
-              }, 
-              ticks: { 
-                precision: 0,
-                color: '#6c757d'
-              } 
-            },
-            x: { 
-              title: { 
-                display: true, 
-                text: '总分区间',
-                color: '#2c3e50'
-              },
-              ticks: {
-                color: '#6c757d'
-              }
-            }
-          }
-        }
-      });
-    }
-
-    // 时间轴功能实现
-    const slider = document.getElementById('timelineSlider');
-    const prevBtn = document.getElementById('prevSnapshot');
-    const nextBtn = document.getElementById('nextSnapshot');
-    const playPauseBtn = document.getElementById('playPauseBtn');
-    const speedSelect = document.getElementById('playbackSpeed');
-    const animationToggle = document.getElementById('animationToggle');
-    const currentTimeSpan = document.getElementById('currentTime');
-    const currentSubmissionSpan = document.getElementById('currentSubmission');
+    },
     
-    // 从后端获取的时间轴数据
-    const timelineData = JSON.parse('{{ timeline_data | tojson | safe }}');
-    let currentIndex = timelineData.length - 1;
-    let isPlaying = false;
-    let playInterval = null;
-    let lastRankings = new Map(); // 存储上一次的排名
-    
-    // 自动播放控制
-    function togglePlay() {
-        isPlaying = !isPlaying;
-        if (isPlaying) {
-            playPauseBtn.textContent = '⏸';
-            playPauseBtn.classList.add('playing');
-            startPlayback();
-        } else {
-            playPauseBtn.textContent = '▶';
-            playPauseBtn.classList.remove('playing');
-            stopPlayback();
-        }
-    }
-    
-    function startPlayback() {
-        const speed = parseFloat(speedSelect.value);
-        const interval = 1000 / speed; // 基础间隔1秒
+    updateTableData(submissionId, timelineData) {
+        const rows = this.table.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
+        const currentRankings = this.getCurrentRankings(rows);
         
-        playInterval = setInterval(() => {
-            if (currentIndex < timelineData.length - 1) {
-                currentIndex++;
-                updateTimelineInfo();
-            } else {
-                stopPlayback();
-                isPlaying = false;
-                playPauseBtn.textContent = '▶';
-                playPauseBtn.classList.remove('playing');
-            }
-        }, interval);
-    }
-    
-    function stopPlayback() {
-        if (playInterval) {
-            clearInterval(playInterval);
-            playInterval = null;
-        }
-    }
-    
-    // 速度变化时更新播放间隔
-    speedSelect.addEventListener('change', function() {
-        if (isPlaying) {
-            stopPlayback();
-            startPlayback();
-        }
-    });
-    
-    // 播放按钮事件
-    playPauseBtn.addEventListener('click', togglePlay);
-    
-    // 更新表格数据
-    function updateTableData(submissionId) {
-        const table = document.getElementById('rank-table');
-        const rows = table.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
+        this.resetScores(rows);
+        this.updateScoresToSubmission(rows, submissionId, timelineData);
+        this.recalculateTotalScores(rows);
+        this.updateRankings(rows);
         
-        // 保存当前排名
-        const currentRankings = new Map();
+        // 重新应用分数颜色
+        this.updateAllScoreColors();
+        
+        if (document.getElementById('animationToggle').checked) {
+            this.applyRankingAnimations(rows);
+        }
+        
+        this.lastRankings = currentRankings;
+        this.reinitializeTooltips();
+    },
+    
+    getCurrentRankings(rows) {
+        const rankings = new Map();
         for (let row of rows) {
             const username = row.querySelector('.username-cell').textContent;
             const rank = parseInt(row.querySelector('.rank-cell').textContent);
-            currentRankings.set(username, rank);
+            rankings.set(username, rank);
         }
-        
-        // 重置所有分数
+        return rankings;
+    },
+    
+    resetScores(rows) {
         for (let row of rows) {
             const cells = row.getElementsByClassName('score-cell');
             for (let cell of cells) {
@@ -1182,85 +1089,157 @@
                 }
             }
         }
-        
-        // 更新到指定提交ID时的分数
-        for (let i = 0; i <= timelineData.findIndex(item => item.submissionId === submissionId); i++) {
+    },
+    
+    updateScoresToSubmission(rows, submissionId, timelineData) {
+        const submissionIndex = timelineData.findIndex(item => item.submissionId === submissionId);
+        for (let i = 0; i <= submissionIndex; i++) {
             const item = timelineData[i];
             for (let row of rows) {
                 const usernameCell = row.querySelector('.username-cell');
                 if (usernameCell && usernameCell.textContent === item.username) {
-                    const cells = row.getElementsByClassName('score-cell');
-                    for (let cell of cells) {
-                        const problemId = cell.closest('table').querySelectorAll('thead th')[cell.cellIndex].textContent.split('：')[0];
-                        if (problemId === item.problemId) {
-                            const scoreText = cell.querySelector('.score-text');
-                            if (scoreText) {
-                                scoreText.textContent = item.score;
-                            }
-                        }
-                    }
+                    this.updateProblemScore(row, item);
                 }
             }
         }
-        
-        // 重新计算总分
-        const userScores = new Map();
-        for (let row of rows) {
-            const cells = row.getElementsByClassName('score-cell');
-            let total = 0;
-            for (let cell of cells) {
+    },
+    
+    updateProblemScore(row, item) {
+        const cells = row.getElementsByClassName('score-cell');
+        for (let cell of cells) {
+            const problemId = cell.closest('table').querySelectorAll('thead th')[cell.cellIndex].textContent.split('：')[0];
+            if (problemId === item.problemId) {
                 const scoreText = cell.querySelector('.score-text');
                 if (scoreText) {
-                    total += parseFloat(scoreText.textContent) || 0;
+                    scoreText.textContent = item.score;
                 }
             }
+        }
+    },
+    
+    recalculateTotalScores(rows) {
+        const userScores = new Map();
+        for (let row of rows) {
+            const total = this.calculateRowTotal(row);
             const username = row.querySelector('.username-cell').textContent;
             userScores.set(username, total);
-            const totalCell = row.cells[row.cells.length - 1];
-            if (totalCell) {
-                totalCell.querySelector('.score-text').textContent = total;
-            }
+            this.updateTotalCell(row, total);
         }
-        
-        // 计算新排名
+        return userScores;
+    },
+    
+    calculateRowTotal(row) {
+        const cells = row.getElementsByClassName('score-cell');
+        return Array.from(cells).reduce((total, cell) => {
+            const scoreText = cell.querySelector('.score-text');
+            return total + Utils.parseScore(scoreText.textContent);
+        }, 0);
+    },
+    
+    updateTotalCell(row, total) {
+        const totalCell = row.cells[row.cells.length - 1];
+        if (totalCell) {
+            totalCell.querySelector('.score-text').textContent = total;
+        }
+    },
+    
+    updateRankings(rows) {
+        const userScores = this.recalculateTotalScores(rows);
         const sortedUsers = Array.from(userScores.entries())
             .sort((a, b) => b[1] - a[1]);
         
-        // 更新排名并重新排序表格行
-        const tbody = table.getElementsByTagName('tbody')[0];
+        const tbody = this.table.getElementsByTagName('tbody')[0];
         const newRows = [];
         
-        for (let i = 0; i < sortedUsers.length; i++) {
-            const [username, score] = sortedUsers[i];
+        sortedUsers.forEach(([username, score], index) => {
             const row = Array.from(rows).find(r => r.querySelector('.username-cell').textContent === username);
             if (row) {
-                const rankCell = row.querySelector('.rank-cell');
-                if (rankCell) {
-                    rankCell.textContent = (i + 1).toString();
-                }
+                this.updateRankCell(row, index + 1);
                 newRows.push(row);
             }
+        });
+        
+        this.reorderTableRows(tbody, newRows);
+    },
+    
+    updateRankCell(row, newRank) {
+        const rankCell = row.querySelector('.rank-cell');
+        if (rankCell) {
+            const oldRank = parseInt(rankCell.textContent);
+            rankCell.textContent = newRank.toString();
+            
+            if (oldRank !== newRank) {
+                this.addRankChangeIndicator(rankCell, oldRank, newRank, row);
+            }
+        }
+    },
+    
+    addRankChangeIndicator(rankCell, oldRank, newRank, row) {
+        const change = oldRank - newRank;
+        const indicator = document.createElement('span');
+        indicator.className = 'rank-change-indicator';
+        
+        if (change > 0) {
+            rankCell.classList.add('rank-improved');
+            indicator.classList.add('rank-up-indicator');
+            indicator.innerHTML = `↑${change}`;
+            row.classList.add('rank-up');
+        } else if (change < 0) {
+            rankCell.classList.add('rank-declined');
+            indicator.classList.add('rank-down-indicator');
+            indicator.innerHTML = `↓${Math.abs(change)}`;
         }
         
-        // 保存旧位置用于动画
+        rankCell.appendChild(indicator);
+        
+        setTimeout(() => {
+            rankCell.classList.remove('rank-improved', 'rank-declined');
+            row.classList.remove('rank-up');
+            indicator.remove();
+        }, 1000);
+    },
+    
+    reorderTableRows(tbody, newRows) {
+        newRows.forEach(row => tbody.appendChild(row));
+    },
+    
+    applyRankingAnimations(rows) {
+        if (this.lastRankings.size === 0) return;
+        
         const oldPositions = new Map();
         Array.from(rows).forEach((row, index) => {
             oldPositions.set(row.querySelector('.username-cell').textContent, index);
         });
         
-        // 重新排序表格行
-        newRows.forEach(row => {
-            tbody.appendChild(row);
+        newRows.forEach((row, newIndex) => {
+            const username = row.querySelector('.username-cell').textContent;
+            const oldIndex = oldPositions.get(username);
+            
+            if (oldIndex !== undefined && oldIndex !== newIndex) {
+                const moveDistance = (oldIndex - newIndex) * row.offsetHeight;
+                row.style.setProperty('--move-distance', `${moveDistance}px`);
+                row.classList.add('rank-animation');
+                
+                row.addEventListener('animationend', () => {
+                    row.classList.remove('rank-animation');
+                }, { once: true });
+            }
         });
-        
-        // 重新应用分数颜色
-        document.querySelectorAll('#rank-table tbody td.score-cell').forEach(cell => {
+    },
+    
+    reinitializeTooltips() {
+        $('[data-bs-toggle="tooltip"]').tooltip('dispose').tooltip({
+            trigger: 'hover',
+            placement: 'top'
+        });
+    },
+    
+    // 添加新方法：更新所有分数颜色
+    updateAllScoreColors() {
+        this.table.querySelectorAll('tbody td.score-cell').forEach(cell => {
             const scoreSpan = cell.querySelector('.score-text');
             if (scoreSpan) {
-                const score = parseFloat(scoreSpan.textContent);
-                const username = cell.parentElement.cells[1].textContent;
-                const ths = cell.closest('table').querySelectorAll('thead th');
-                const problemName = ths[cell.cellIndex].textContent.trim();
+                const score = Utils.parseScore(scoreSpan.textContent);
                 const isTotalScore = cell.cellIndex === cell.parentElement.cells.length - 1;
                 const maxScore = isTotalScore ? 300 : 100;
                 cell.setAttribute('data-max', maxScore);
@@ -1269,115 +1248,162 @@
                     scoreSpan.style.color = '#95a5a6';
                 } else {
                     let percent = Math.max(0, Math.min(1, score / maxScore));
-                    scoreSpan.style.color = colorScale(percent * 100).hex();
-                    scoreSpan.style.background = '';
-                    scoreSpan.style.backgroundClip = '';
-                    scoreSpan.style.webkitBackgroundClip = '';
+                    scoreSpan.style.color = ColorManager.getScoreColor(score, maxScore);
                 }
-
-                // 更新工具提示
-                cell.setAttribute('data-bs-toggle', 'tooltip');
-                cell.setAttribute('title', `${username} 此时在 ${problemName} 的得分: ${score}分`);
             }
         });
-        
-        // 应用排名变动动画
-        if (animationToggle.checked && lastRankings.size > 0) {
-            newRows.forEach((row, newIndex) => {
-                const username = row.querySelector('.username-cell').textContent;
-                const oldIndex = oldPositions.get(username);
-                
-                if (oldIndex !== undefined && oldIndex !== newIndex) {
-                    const moveDistance = (oldIndex - newIndex) * row.offsetHeight;
-                    row.style.setProperty('--move-distance', `${moveDistance}px`);
-                    row.classList.add('rank-animation');
-                    
-                    // 动画结束后移除类
-                    row.addEventListener('animationend', () => {
-                        row.classList.remove('rank-animation');
-                    }, { once: true });
-                }
-            });
-        }
-        
-        // 更新上一次的排名
-        lastRankings = new Map(currentRankings);
+    }
+};
 
-        // 重新初始化工具提示
-        $('[data-bs-toggle="tooltip"]').tooltip('dispose').tooltip({
-            trigger: 'hover',
-            placement: 'top'
+// 时间轴控制模块
+const TimelineManager = {
+    currentIndex: 0,
+    isPlaying: false,
+    playInterval: null,
+    timelineData: [],
+    
+    init(timelineData) {
+        this.timelineData = timelineData;
+        this.currentIndex = timelineData.length - 1;
+        this.initControls();
+        this.initKeyboardControls();
+        this.updateTimelineInfo();
+    },
+    
+    initControls() {
+        this.slider = document.getElementById('timelineSlider');
+        this.prevBtn = document.getElementById('prevSnapshot');
+        this.nextBtn = document.getElementById('nextSnapshot');
+        this.playPauseBtn = document.getElementById('playPauseBtn');
+        this.speedSelect = document.getElementById('playbackSpeed');
+        
+        this.slider.addEventListener('input', () => {
+            this.currentIndex = Math.round((this.slider.value / 100) * (this.timelineData.length - 1));
+            this.updateTimelineInfo();
         });
-    }
-    
-    // 更新显示信息
-    function updateTimelineInfo() {
-        const data = timelineData[currentIndex];
-        currentTimeSpan.textContent = `当前提交: #${data.submissionId}`;
-        currentSubmissionSpan.textContent = `提交编号: ${data.submissionId}`;
-        slider.value = (currentIndex / (timelineData.length - 1)) * 100;
         
-        // 更新表格数据
-        updateTableData(data.submissionId);
+        this.prevBtn.addEventListener('click', () => this.moveToPrevious());
+        this.nextBtn.addEventListener('click', () => this.moveToNext());
+        this.playPauseBtn.addEventListener('click', () => this.togglePlay());
+        this.speedSelect.addEventListener('change', () => this.updatePlaybackSpeed());
+    },
+    
+    initKeyboardControls() {
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowLeft' && !this.prevBtn.disabled) {
+                this.moveToPrevious();
+            } else if (e.key === 'ArrowRight' && !this.nextBtn.disabled) {
+                this.moveToNext();
+            }
+        });
+    },
+    
+    moveToPrevious() {
+        if (this.currentIndex > 0) {
+            this.currentIndex--;
+            this.updateTimelineInfo();
+        }
+    },
+    
+    moveToNext() {
+        if (this.currentIndex < this.timelineData.length - 1) {
+            this.currentIndex++;
+            this.updateTimelineInfo();
+        }
+    },
+    
+    togglePlay() {
+        this.isPlaying = !this.isPlaying;
+        if (this.isPlaying) {
+            this.startPlayback();
+            this.playPauseBtn.textContent = '⏸';
+            this.playPauseBtn.classList.add('playing');
+        } else {
+            this.stopPlayback();
+            this.playPauseBtn.textContent = '▶';
+            this.playPauseBtn.classList.remove('playing');
+        }
+    },
+    
+    startPlayback() {
+        const speed = parseFloat(this.speedSelect.value);
+        const interval = 1000 / speed;
         
-        // 更新按钮状态
-        prevBtn.disabled = currentIndex === 0;
-        nextBtn.disabled = currentIndex === timelineData.length - 1;
+        this.playInterval = setInterval(() => {
+            if (this.currentIndex < this.timelineData.length - 1) {
+                this.currentIndex++;
+                this.updateTimelineInfo();
+            } else {
+                this.stopPlayback();
+                this.isPlaying = false;
+                this.playPauseBtn.textContent = '▶';
+                this.playPauseBtn.classList.remove('playing');
+            }
+        }, interval);
+    },
+    
+    stopPlayback() {
+        if (this.playInterval) {
+            clearInterval(this.playInterval);
+            this.playInterval = null;
+        }
+    },
+    
+    updatePlaybackSpeed() {
+        if (this.isPlaying) {
+            this.stopPlayback();
+            this.startPlayback();
+        }
+    },
+    
+    updateTimelineInfo() {
+        const data = this.timelineData[this.currentIndex];
+        document.getElementById('currentTime').textContent = `当前提交: #${data.submissionId}`;
+        document.getElementById('currentSubmission').textContent = `提交编号: ${data.submissionId}`;
+        this.slider.value = (this.currentIndex / (this.timelineData.length - 1)) * 100;
+        
+        TableManager.updateTableData(data.submissionId, this.timelineData);
+        
+        this.prevBtn.disabled = this.currentIndex === 0;
+        this.nextBtn.disabled = this.currentIndex === this.timelineData.length - 1;
     }
-    
-    // 滑动条事件
-    slider.addEventListener('input', function() {
-        currentIndex = Math.round((this.value / 100) * (timelineData.length - 1));
-        updateTimelineInfo();
-    });
-    
-    // 按钮事件
-    prevBtn.addEventListener('click', function() {
-        if (currentIndex > 0) {
-            currentIndex--;
-            updateTimelineInfo();
-        }
-    });
-    
-    nextBtn.addEventListener('click', function() {
-        if (currentIndex < timelineData.length - 1) {
-            currentIndex++;
-            updateTimelineInfo();
-        }
-    });
-    
-    // 初始化显示
-    updateTimelineInfo();
-    
-    // 添加键盘控制
-    document.addEventListener('keydown', function(e) {
-        if (e.key === 'ArrowLeft' && !prevBtn.disabled) {
-            prevBtn.click();
-        } else if (e.key === 'ArrowRight' && !nextBtn.disabled) {
-            nextBtn.click();
-        }
-    });
-  });
+};
 
-  // 全屏功能实现
-  const toggleFullscreenBtn = document.getElementById('toggleFullscreen');
-  const exitFullscreenBtn = document.getElementById('exitFullscreen');
-  
-  toggleFullscreenBtn.addEventListener('click', function() {
-    document.body.classList.add('fullscreen-mode');
-    window.scrollTo(0, 0);
-  });
-  
-  exitFullscreenBtn.addEventListener('click', function() {
-    document.body.classList.remove('fullscreen-mode');
-  });
-  
-  // ESC键退出全屏
-  document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape' && document.body.classList.contains('fullscreen-mode')) {
-      document.body.classList.remove('fullscreen-mode');
+// 全屏控制模块
+const FullscreenManager = {
+    init() {
+        this.toggleBtn = document.getElementById('toggleFullscreen');
+        this.exitBtn = document.getElementById('exitFullscreen');
+        
+        this.toggleBtn.addEventListener('click', () => this.enterFullscreen());
+        this.exitBtn.addEventListener('click', () => this.exitFullscreen());
+        
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && document.body.classList.contains('fullscreen-mode')) {
+                this.exitFullscreen();
+            }
+        });
+    },
+    
+    enterFullscreen() {
+        document.body.classList.add('fullscreen-mode');
+        window.scrollTo(0, 0);
+    },
+    
+    exitFullscreen() {
+        document.body.classList.remove('fullscreen-mode');
     }
-  });
+};
+
+// 初始化
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('timestamp').textContent = new Date().toLocaleString();
+    
+    // 初始化各个模块
+    TableManager.init();
+    TimelineManager.init(JSON.parse('{{ timeline_data | tojson | safe }}'));
+    FullscreenManager.init();
+});
 </script>
 </body>
 </html>
