@@ -513,6 +513,253 @@
     
     
   }
+
+  /* 时间轴样式 */
+  .timeline-container {
+    margin-top: 20px;
+    padding: 20px;
+  }
+
+  .timeline-title {
+    color: var(--primary-color);
+    margin-bottom: 15px;
+    font-size: 18px;
+    text-align: center;
+  }
+
+  .timeline-controls {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 10px;
+  }
+
+  .timeline-slider-container {
+    flex: 1;
+    position: relative;
+    padding: 10px 0;
+  }
+
+  .timeline-slider {
+    width: 100%;
+    height: 4px;
+    /* -webkit-appearance: none; */
+    background: #e0e7ff;
+    border-radius: 2px;
+    outline: none;
+  }
+
+  .timeline-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 16px;
+    height: 16px;
+    background: var(--primary-color);
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .timeline-slider::-webkit-slider-thumb:hover {
+    transform: scale(1.2);
+    background: var(--secondary-color);
+  }
+
+  .timeline-marks {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 2px;
+    pointer-events: none;
+  }
+
+  .timeline-btn {
+    width: 36px;
+    height: 36px;
+    border: none;
+    border-radius: 50%;
+    background: var(--primary-color);
+    color: white;
+    font-size: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+  }
+
+  .timeline-btn:hover {
+    background: var(--secondary-color);
+    transform: scale(1.1);
+  }
+
+  .timeline-btn:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  .timeline-info {
+    display: flex;
+    justify-content: space-between;
+    color: var(--text-color);
+    font-size: 14px;
+    margin-top: 10px;
+  }
+
+  /* 响应式调整 */
+  @media (max-width: 768px) {
+    .timeline-controls {
+      flex-direction: column;
+      gap: 10px;
+    }
+    
+    .timeline-btn {
+      width: 32px;
+      height: 32px;
+    }
+    
+    .timeline-info {
+      flex-direction: column;
+      align-items: center;
+      gap: 5px;
+    }
+  }
+
+  /* 速度控制样式 */
+  .speed-control {
+    display: flex;
+    align-items: center;
+    margin-left: 10px;
+  }
+
+  .speed-select {
+    padding: 5px 10px;
+    border: 1px solid #d0d7e2;
+    border-radius: 8px;
+    background: #f8fafc;
+    color: var(--text-color);
+    font-family: 'Inter', sans-serif;
+    cursor: pointer;
+    transition: all 0.3s;
+  }
+
+  .speed-select:hover {
+    border-color: var(--secondary-color);
+  }
+
+  .speed-select:focus {
+    outline: none;
+    border-color: var(--secondary-color);
+    box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.2);
+  }
+
+  /* 播放按钮样式 */
+  #playPauseBtn.playing {
+    background-color: var(--accent-color);
+  }
+
+  #playPauseBtn.playing:hover {
+    background-color: #c0392b;
+  }
+
+  /* 动画控制开关样式 */
+  .animation-control {
+    display: flex;
+    align-items: center;
+    margin-left: 15px;
+  }
+
+  .animation-label {
+    margin-left: 8px;
+    color: var(--text-color);
+    font-size: 14px;
+  }
+
+  .switch {
+    position: relative;
+    display: inline-block;
+    width: 40px;
+    height: 20px;
+  }
+
+  .switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+
+  .slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: .4s;
+  }
+
+  .slider:before {
+    position: absolute;
+    content: "";
+    height: 16px;
+    width: 16px;
+    left: 2px;
+    bottom: 2px;
+    background-color: white;
+    transition: .4s;
+  }
+
+  input:checked + .slider {
+    background-color: var(--primary-color);
+  }
+
+  input:checked + .slider:before {
+    transform: translateX(20px);
+  }
+
+  .slider.round {
+    border-radius: 20px;
+  }
+
+  .slider.round:before {
+    border-radius: 50%;
+  }
+
+  /* 排名变动动画样式 */
+  @keyframes rankChange {
+    0% {
+      transform: translateY(0);
+      background-color: rgba(255, 255, 255, 0);
+    }
+    50% {
+      transform: translateY(var(--move-distance));
+      background-color: rgba(44, 111, 187, 0.1);
+    }
+    100% {
+      transform: translateY(0);
+      background-color: rgba(255, 255, 255, 0);
+    }
+  }
+
+  .rank-animation {
+    animation: rankChange 0.45s ease-in-out;
+  }
+
+  /* 响应式调整 */
+  @media (max-width: 768px) {
+    .timeline-controls {
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    
+    .animation-control {
+      margin: 10px 0 0 0;
+      width: 100%;
+      justify-content: center;
+    }
+  }
 </style>
 </head>
 <body>
@@ -556,6 +803,38 @@
       <div class="table-container">
         <!-- 表格内容将由后端模板渲染 -->
         {{table_html}}
+      </div>
+    </div>
+
+    <!-- 添加时间轴滑动条 -->
+    <div class="card timeline-container">
+      <h3 class="timeline-title">历史时刻</h3>
+      <div class="timeline-controls">
+        <button id="prevSnapshot" class="timeline-btn" title="上一个时刻">◀</button>
+        <div class="timeline-slider-container">
+          <input type="range" id="timelineSlider" class="timeline-slider" min="0" max="100" value="100">
+          <div class="timeline-marks"></div>
+        </div>
+        <button id="nextSnapshot" class="timeline-btn" title="下一个时刻">▶</button>
+        <button id="playPauseBtn" class="timeline-btn" title="自动播放">▶</button>
+        <div class="speed-control">
+          <select id="playbackSpeed" class="speed-select">
+            <option value="0.5">0.5x</option>
+            <option value="1" selected>1x</option>
+            <option value="2">2x</option>
+          </select>
+        </div>
+        <div class="animation-control">
+          <label class="switch">
+            <input type="checkbox" id="animationToggle" checked>
+            <span class="slider round"></span>
+          </label>
+          <span class="animation-label">动画效果</span>
+        </div>
+      </div>
+      <div class="timeline-info">
+        <span id="currentTime">当前提交: </span>
+        <span id="currentSubmission">提交编号: </span>
       </div>
     </div>
     
@@ -813,6 +1092,271 @@
         }
       });
     }
+
+    // 时间轴功能实现
+    const slider = document.getElementById('timelineSlider');
+    const prevBtn = document.getElementById('prevSnapshot');
+    const nextBtn = document.getElementById('nextSnapshot');
+    const playPauseBtn = document.getElementById('playPauseBtn');
+    const speedSelect = document.getElementById('playbackSpeed');
+    const animationToggle = document.getElementById('animationToggle');
+    const currentTimeSpan = document.getElementById('currentTime');
+    const currentSubmissionSpan = document.getElementById('currentSubmission');
+    
+    // 从后端获取的时间轴数据
+    const timelineData = JSON.parse('{{ timeline_data | tojson | safe }}');
+    let currentIndex = timelineData.length - 1;
+    let isPlaying = false;
+    let playInterval = null;
+    let lastRankings = new Map(); // 存储上一次的排名
+    
+    // 自动播放控制
+    function togglePlay() {
+        isPlaying = !isPlaying;
+        if (isPlaying) {
+            playPauseBtn.textContent = '⏸';
+            playPauseBtn.classList.add('playing');
+            startPlayback();
+        } else {
+            playPauseBtn.textContent = '▶';
+            playPauseBtn.classList.remove('playing');
+            stopPlayback();
+        }
+    }
+    
+    function startPlayback() {
+        const speed = parseFloat(speedSelect.value);
+        const interval = 1000 / speed; // 基础间隔1秒
+        
+        playInterval = setInterval(() => {
+            if (currentIndex < timelineData.length - 1) {
+                currentIndex++;
+                updateTimelineInfo();
+            } else {
+                stopPlayback();
+                isPlaying = false;
+                playPauseBtn.textContent = '▶';
+                playPauseBtn.classList.remove('playing');
+            }
+        }, interval);
+    }
+    
+    function stopPlayback() {
+        if (playInterval) {
+            clearInterval(playInterval);
+            playInterval = null;
+        }
+    }
+    
+    // 速度变化时更新播放间隔
+    speedSelect.addEventListener('change', function() {
+        if (isPlaying) {
+            stopPlayback();
+            startPlayback();
+        }
+    });
+    
+    // 播放按钮事件
+    playPauseBtn.addEventListener('click', togglePlay);
+    
+    // 更新表格数据
+    function updateTableData(submissionId) {
+        const table = document.getElementById('rank-table');
+        const rows = table.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
+        
+        // 保存当前排名
+        const currentRankings = new Map();
+        for (let row of rows) {
+            const username = row.querySelector('.username-cell').textContent;
+            const rank = parseInt(row.querySelector('.rank-cell').textContent);
+            currentRankings.set(username, rank);
+        }
+        
+        // 重置所有分数
+        for (let row of rows) {
+            const cells = row.getElementsByClassName('score-cell');
+            for (let cell of cells) {
+                const scoreText = cell.querySelector('.score-text');
+                if (scoreText) {
+                    scoreText.textContent = '0';
+                }
+            }
+        }
+        
+        // 更新到指定提交ID时的分数
+        for (let i = 0; i <= timelineData.findIndex(item => item.submissionId === submissionId); i++) {
+            const item = timelineData[i];
+            for (let row of rows) {
+                const usernameCell = row.querySelector('.username-cell');
+                if (usernameCell && usernameCell.textContent === item.username) {
+                    const cells = row.getElementsByClassName('score-cell');
+                    for (let cell of cells) {
+                        const problemId = cell.closest('table').querySelectorAll('thead th')[cell.cellIndex].textContent.split('：')[0];
+                        if (problemId === item.problemId) {
+                            const scoreText = cell.querySelector('.score-text');
+                            if (scoreText) {
+                                scoreText.textContent = item.score;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        // 重新计算总分
+        const userScores = new Map();
+        for (let row of rows) {
+            const cells = row.getElementsByClassName('score-cell');
+            let total = 0;
+            for (let cell of cells) {
+                const scoreText = cell.querySelector('.score-text');
+                if (scoreText) {
+                    total += parseFloat(scoreText.textContent) || 0;
+                }
+            }
+            const username = row.querySelector('.username-cell').textContent;
+            userScores.set(username, total);
+            const totalCell = row.cells[row.cells.length - 1];
+            if (totalCell) {
+                totalCell.querySelector('.score-text').textContent = total;
+            }
+        }
+        
+        // 计算新排名
+        const sortedUsers = Array.from(userScores.entries())
+            .sort((a, b) => b[1] - a[1]);
+        
+        // 更新排名并重新排序表格行
+        const tbody = table.getElementsByTagName('tbody')[0];
+        const newRows = [];
+        
+        for (let i = 0; i < sortedUsers.length; i++) {
+            const [username, score] = sortedUsers[i];
+            const row = Array.from(rows).find(r => r.querySelector('.username-cell').textContent === username);
+            if (row) {
+                const rankCell = row.querySelector('.rank-cell');
+                if (rankCell) {
+                    rankCell.textContent = (i + 1).toString();
+                }
+                newRows.push(row);
+            }
+        }
+        
+        // 保存旧位置用于动画
+        const oldPositions = new Map();
+        Array.from(rows).forEach((row, index) => {
+            oldPositions.set(row.querySelector('.username-cell').textContent, index);
+        });
+        
+        // 重新排序表格行
+        newRows.forEach(row => {
+            tbody.appendChild(row);
+        });
+        
+        // 重新应用分数颜色
+        document.querySelectorAll('#rank-table tbody td.score-cell').forEach(cell => {
+            const scoreSpan = cell.querySelector('.score-text');
+            if (scoreSpan) {
+                const score = parseFloat(scoreSpan.textContent);
+                const username = cell.parentElement.cells[1].textContent;
+                const ths = cell.closest('table').querySelectorAll('thead th');
+                const problemName = ths[cell.cellIndex].textContent.trim();
+                const isTotalScore = cell.cellIndex === cell.parentElement.cells.length - 1;
+                const maxScore = isTotalScore ? 300 : 100;
+                cell.setAttribute('data-max', maxScore);
+                
+                if (score < 0) {
+                    scoreSpan.style.color = '#95a5a6';
+                } else {
+                    let percent = Math.max(0, Math.min(1, score / maxScore));
+                    scoreSpan.style.color = colorScale(percent * 100).hex();
+                    scoreSpan.style.background = '';
+                    scoreSpan.style.backgroundClip = '';
+                    scoreSpan.style.webkitBackgroundClip = '';
+                }
+
+                // 更新工具提示
+                cell.setAttribute('data-bs-toggle', 'tooltip');
+                cell.setAttribute('title', `${username} 此时在 ${problemName} 的得分: ${score}分`);
+            }
+        });
+        
+        // 应用排名变动动画
+        if (animationToggle.checked && lastRankings.size > 0) {
+            newRows.forEach((row, newIndex) => {
+                const username = row.querySelector('.username-cell').textContent;
+                const oldIndex = oldPositions.get(username);
+                
+                if (oldIndex !== undefined && oldIndex !== newIndex) {
+                    const moveDistance = (oldIndex - newIndex) * row.offsetHeight;
+                    row.style.setProperty('--move-distance', `${moveDistance}px`);
+                    row.classList.add('rank-animation');
+                    
+                    // 动画结束后移除类
+                    row.addEventListener('animationend', () => {
+                        row.classList.remove('rank-animation');
+                    }, { once: true });
+                }
+            });
+        }
+        
+        // 更新上一次的排名
+        lastRankings = new Map(currentRankings);
+
+        // 重新初始化工具提示
+        $('[data-bs-toggle="tooltip"]').tooltip('dispose').tooltip({
+            trigger: 'hover',
+            placement: 'top'
+        });
+    }
+    
+    // 更新显示信息
+    function updateTimelineInfo() {
+        const data = timelineData[currentIndex];
+        currentTimeSpan.textContent = `当前提交: #${data.submissionId}`;
+        currentSubmissionSpan.textContent = `提交编号: ${data.submissionId}`;
+        slider.value = (currentIndex / (timelineData.length - 1)) * 100;
+        
+        // 更新表格数据
+        updateTableData(data.submissionId);
+        
+        // 更新按钮状态
+        prevBtn.disabled = currentIndex === 0;
+        nextBtn.disabled = currentIndex === timelineData.length - 1;
+    }
+    
+    // 滑动条事件
+    slider.addEventListener('input', function() {
+        currentIndex = Math.round((this.value / 100) * (timelineData.length - 1));
+        updateTimelineInfo();
+    });
+    
+    // 按钮事件
+    prevBtn.addEventListener('click', function() {
+        if (currentIndex > 0) {
+            currentIndex--;
+            updateTimelineInfo();
+        }
+    });
+    
+    nextBtn.addEventListener('click', function() {
+        if (currentIndex < timelineData.length - 1) {
+            currentIndex++;
+            updateTimelineInfo();
+        }
+    });
+    
+    // 初始化显示
+    updateTimelineInfo();
+    
+    // 添加键盘控制
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'ArrowLeft' && !prevBtn.disabled) {
+            prevBtn.click();
+        } else if (e.key === 'ArrowRight' && !nextBtn.disabled) {
+            nextBtn.click();
+        }
+    });
   });
 
   // 全屏功能实现
