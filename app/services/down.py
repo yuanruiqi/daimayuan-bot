@@ -42,9 +42,8 @@ def create_session():
     
     return session
 
-@lru_cache(maxsize=1000)
 def get_contest_problems(session, contest_id):
-    """获取比赛中的所有问题ID和题目名称（使用内存缓存）"""
+    """获取比赛中的所有问题ID和题目名称"""
     url = f"http://oj.daimayuan.top/contest/{contest_id}"
     response = session.get(url)
 
