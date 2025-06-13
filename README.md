@@ -28,7 +28,7 @@
 3. **运行**
 
    ```bash
-   python app.py
+   python3 wsgi.py
    ```
 
 4. **访问**
@@ -91,7 +91,7 @@ MIT License
 3. **Run**
 
    ```bash
-   python app.py
+   python3 wsgi.py
    ```
 
 4. **Access**
