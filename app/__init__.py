@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, render_template
 import logging
 from logging.handlers import RotatingFileHandler
 import os
@@ -44,6 +44,9 @@ def create_app():
     # app.logger.handlers = logger.handlers
     # app.logger.setLevel(logger.level)
 
+    @app.errorhandler(404)
+    def global_404(e):
+        return render_template('404.html'), 404
     
     # 注册蓝图
     from app.routes import register_routes
