@@ -111,7 +111,7 @@ def run_in_background(start_id, end_id, cid, task_id):
             tasks[task_id].donetime = time.time()
         elif status == 'completed':
             logger.info(f"任务{task_id}已完成")
-            html[task_id] = res
+            html[task_id] = res  # res 现在是 context 字典
             tasks[task_id].status = "completed"
             tasks[task_id].progress = 100
             tasks[task_id].donetime = time.time()

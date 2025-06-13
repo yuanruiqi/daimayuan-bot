@@ -865,7 +865,7 @@
     <div class="card">
       <div class="table-container">
         <!-- 表格内容将由后端模板渲染 -->
-        {{table_html}}
+        {{ table_html|safe }}
       </div>
     </div>
     
@@ -999,7 +999,7 @@
       const maxScore = isTotalScore ? 300 : 100;
       cell.setAttribute('data-max', maxScore);
       if (score < 0) {
-        scoreSpan.style.color = '#95a5a6';
+        scoreSpan.style.color = '#95a5a5';
       } else {
         let percent = Math.max(0, Math.min(1, score / maxScore));
         scoreSpan.style.color = colorScale(percent * 100).hex();

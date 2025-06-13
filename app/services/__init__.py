@@ -18,8 +18,7 @@ def run(start_id, end_id, cid, task_id, progress_callback=None,should_cancel=Non
     # 2. 分析数据生成DataFrame
     df, name_order, submission_history = anal(submission_data)
     
-    logger.info(f"任务 {task_id} 开始生成 html")
-    # 3. 渲染HTML
-    table_html = ren(df, start_id,end_id,cid,name_order, submission_history, problem_map)
-    
-    return 'completed', table_html
+    logger.info(f"任务 {task_id} 开始生成 html context")
+    # 3. 渲染HTML context
+    context = ren(df, start_id,end_id,cid,name_order, submission_history, problem_map)
+    return 'completed', context
