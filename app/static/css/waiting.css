@@ -1,126 +1,126 @@
 /* waiting.css */
-        body {
-            font-family: 'Inter', sans-serif;
-            background: linear-gradient(to right, #e0eafc, #cfdef3);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-        }
-        .container {
-            background-color: white;
-            padding: 40px;
-            border-radius: 12px;
-            box-shadow: 0 8px 16px rgba(0,0,0,0.15);
-            max-width: 500px;
-            width: 100%;
-            text-align: center;
-        }
-        .progress-container {
-            margin: 30px 0;
-        }
-        .progress-bar {
-            height: 20px;
-            background-color: #f0f0f0;
-            border-radius: 10px;
-            overflow: hidden;
-        }
-        .progress-fill {
-            height: 100%;
-            background: linear-gradient(to right, #4facfe 0%, #00f2fe 100%);
-            border-radius: 10px;
-            width: 0%;
-            transition: width 0.5s ease;
-        }
-        .status-text {
-            margin-top: 15px;
-            font-size: 16px;
-            color: #555;
-        }
-        .info-text {
-            margin: 20px 0;
-            font-size: 14px;
-            color: #777;
-        }
-        .cancel-btn, .home-btn ,.pause-btn,.resume-btn{
-            display: block;
-            margin: 20px auto 0;
-            padding: 12px 30px;
-            border: none;
-            border-radius: 6px;
-            font-size: 16px;
-            cursor: pointer;
-            transition: background-color 0.3s;
-            color: white;
-        }
-        .cancel-btn {
-            background-color: #e74c3c;
-        }
-        .cancel-btn:hover {
-            background-color: #c0392b;
-        }
-        .home-btn {
-            background-color: #3498db;
-        }
-        .home-btn:hover {
-            background-color: #2980b9;
-        }
-        .pause-btn {
-            background-color: #f39c12;
-        }
-        .pause-btn:hover {
-            background-color: #e67e22;
-        }
-        .resume-btn {
-            background-color: #2ecc71;
-        }
-        .resume-btn:hover {
-            background-color: #27ae60;
-        }
+body {
+    font-family: 'Inter', sans-serif;
+    background: linear-gradient(to right, #e0eafc, #cfdef3);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+}
+.container {
+    background-color: white;
+    padding: 40px;
+    border-radius: 12px;
+    box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+    max-width: 500px;
+    width: 100%;
+    text-align: center;
+}
+.progress-container {
+    margin: 30px 0;
+}
+.progress-bar {
+    height: 20px;
+    background-color: #f0f0f0;
+    border-radius: 10px;
+    overflow: hidden;
+}
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(to right, #4facfe 0%, #00f2fe 100%);
+    border-radius: 10px;
+    width: 0%;
+    transition: width 0.5s ease;
+}
+.status-text {
+    margin-top: 15px;
+    font-size: 16px;
+    color: #555;
+}
+.info-text {
+    margin: 20px 0;
+    font-size: 14px;
+    color: #777;
+}
+.cancel-btn, .home-btn ,.pause-btn,.resume-btn{
+    display: block;
+    margin: 20px auto 0;
+    padding: 12px 30px;
+    border: none;
+    border-radius: 6px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    color: white;
+}
+.cancel-btn {
+    background-color: #e74c3c;
+}
+.cancel-btn:hover {
+    background-color: #c0392b;
+}
+.home-btn {
+    background-color: #3498db;
+}
+.home-btn:hover {
+    background-color: #2980b9;
+}
+.pause-btn {
+    background-color: #f39c12;
+}
+.pause-btn:hover {
+    background-color: #e67e22;
+}
+.resume-btn {
+    background-color: #2ecc71;
+}
+.resume-btn:hover {
+    background-color: #27ae60;
+}
 
-        /* 模态框样式 */
-        #confirm-modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background-color: rgba(0, 0, 0, 0.5);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-        }
-        #confirm-modal .modal-content {
-            background: white;
-            padding: 30px;
-            border-radius: 12px;
-            width: 90%;
-            max-width: 400px;
-            text-align: center;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-        }
-        #confirm-modal .modal-content p {
-            font-size: 16px;
-            color: #333;
-        }
-        #confirm-modal .modal-buttons {
-            margin-top: 20px;
-        }
-        #confirm-modal button {
-            padding: 10px 20px;
-            margin: 0 10px;
-            border: none;
-            border-radius: 6px;
-            font-size: 14px;
-            cursor: pointer;
-        }
-        #confirm-yes {
-            background-color: #e74c3c;
-            color: white;
-        }
-        #confirm-no {
-            background-color: #bdc3c7;
-            color: white;
-        }
+/* 模态框样式 */
+#confirm-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+#confirm-modal .modal-content {
+    background: white;
+    padding: 30px;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 400px;
+    text-align: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+#confirm-modal .modal-content p {
+    font-size: 16px;
+    color: #333;
+}
+#confirm-modal .modal-buttons {
+    margin-top: 20px;
+}
+#confirm-modal button {
+    padding: 10px 20px;
+    margin: 0 10px;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    cursor: pointer;
+}
+#confirm-yes {
+    background-color: #e74c3c;
+    color: white;
+}
+#confirm-no {
+    background-color: #bdc3c7;
+    color: white;
+}
