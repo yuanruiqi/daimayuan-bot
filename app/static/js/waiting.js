@@ -1,6 +1,7 @@
 // waiting.js
 // 提取自 waiting.html 的所有 JS 逻辑
 
+// 轮询后端进度并更新进度条、状态等
 function updateProgress() {
     fetch('/progress')
         .then(response => response.json())
@@ -10,6 +11,7 @@ function updateProgress() {
 
             document.getElementById('progress-fill').style.width = progress + '%';
 
+            // 处理不同状态下的按钮显示和文本内容
             if (status !== 'running') {
                 document.getElementById('cancel-btn').style.display = 'none';
                 document.getElementById('home-btn').style.display = '';
@@ -50,10 +52,12 @@ function updateProgress() {
         });
 }
 
+// 取消按钮点击，弹出确认框
 document.getElementById('cancel-btn').addEventListener('click', function () {
     document.getElementById('confirm-modal').style.display = 'flex';
 });
 
+// 确认取消，向后端发送取消请求
 document.getElementById('confirm-yes').addEventListener('click', function () {
     fetch('/cancel', {
         method: 'POST',
@@ -70,14 +74,17 @@ document.getElementById('confirm-yes').addEventListener('click', function () {
     document.getElementById('confirm-modal').style.display = 'none';
 });
 
+// 取消确认弹窗的否定按钮
 document.getElementById('confirm-no').addEventListener('click', function () {
     document.getElementById('confirm-modal').style.display = 'none';
 });
 
+// 返回首页按钮
 document.getElementById('home-btn').addEventListener('click', function () {
     window.location.href = '/';
 });
 
+// 暂停按钮，向后端发送暂停请求
 document.getElementById('pause-btn').addEventListener('click', function () {
     fetch('/pause', {
         method: 'POST',
@@ -94,8 +101,7 @@ document.getElementById('pause-btn').addEventListener('click', function () {
         }
     });
 });
-// 恢复按钮事件
-
+// 恢复按钮，向后端发送恢复请求
 document.getElementById('resume-btn').addEventListener('click', function() {
     fetch('/resume', {
         method: 'POST',
@@ -112,5 +118,7 @@ document.getElementById('resume-btn').addEventListener('click', function() {
         }
     });
 });
+// 定时轮询进度
 setInterval(updateProgress, 1000);
+// 页面初始加载时立即获取一次进度
 updateProgress(); // 初始加载

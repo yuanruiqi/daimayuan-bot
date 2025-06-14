@@ -1,7 +1,8 @@
 document.getElementById('timestamp').textContent = new Date().toLocaleString();
 
-  document.addEventListener('DOMContentLoaded', function() {
-    // 自定义分数排序函数
+// DOMContentLoaded事件，初始化所有交互逻辑
+document.addEventListener('DOMContentLoaded', function() {
+    // 扩展Tablesort以支持分数排序
     Tablesort.extend('score', function(item) {
         return item.match(/^-?\d+$/);
     }, function(a, b) {
@@ -18,7 +19,7 @@ document.getElementById('timestamp').textContent = new Date().toLocaleString();
         column: 0  // 默认按第一列排序
     });
 
-    // 添加表头点击事件
+    // 表头点击事件，切换排序标记
     document.querySelectorAll('th').forEach(th => {
         th.addEventListener('click', function() {
             // 移除其他表头的排序标记
@@ -30,7 +31,7 @@ document.getElementById('timestamp').textContent = new Date().toLocaleString();
         });
     });
 
-    // 搜索功能
+    // 搜索功能，实时过滤用户名
     document.getElementById('searchInput').addEventListener('input', function(e) {
       const searchTerm = e.target.value.toLowerCase().trim();
       const rows = document.querySelectorAll('#rank-table tbody tr');
@@ -40,7 +41,7 @@ document.getElementById('timestamp').textContent = new Date().toLocaleString();
       });
     });
 
-    // 提交历史交互
+    // 分数单元格点击，显示/隐藏提交历史
     document.querySelectorAll('.score-cell').forEach(cell => {
       const history = cell.querySelector('.submission-history');
       if (history) {
@@ -67,7 +68,7 @@ document.getElementById('timestamp').textContent = new Date().toLocaleString();
       }
     });
 
-    // 分数颜色插值色带
+    // 分数颜色插值，渲染分数颜色
     const colorScale = chroma.scale(['#e74c3c', '#f39c12', '#27ae60']).domain([0, 50, 100]);
     document.querySelectorAll('#rank-table tbody td.score-cell').forEach(cell => {
       let scoreSpan = cell.querySelector('.score-text');
@@ -124,7 +125,7 @@ document.getElementById('timestamp').textContent = new Date().toLocaleString();
       }
     });
 
-    // 初始化工具提示
+    // 初始化Bootstrap工具提示
     $(function () {
       $('[data-bs-toggle="tooltip"]').tooltip({
         trigger: 'hover',
@@ -132,7 +133,7 @@ document.getElementById('timestamp').textContent = new Date().toLocaleString();
       });
     });
 
-    // 计算统计信息
+    // 统计信息计算与展示
     const scores = Array.from(document.querySelectorAll('#rank-table tbody td:last-child'))
       .map(td => parseFloat(td.textContent) || 0);
 
@@ -148,7 +149,7 @@ document.getElementById('timestamp').textContent = new Date().toLocaleString();
         : (sortedScores[mid - 1] + sortedScores[mid]) / 2;
       document.getElementById('medianScore').textContent = median.toFixed(1);
       
-      // 绘制图表
+      // 绘制分数分布图表
       const ctx = document.getElementById('scoreDistributionChart').getContext('2d');
       const maxScore = Math.max(...scores);
       const binCount = 10;
@@ -283,6 +284,7 @@ document.getElementById('timestamp').textContent = new Date().toLocaleString();
     playPauseBtn.addEventListener('click', togglePlay);
     
 
+    // 触发动画效果的辅助函数
     function triggerAnimationOnce(el, className) {
       if (!el || !className) return;
 
@@ -432,7 +434,7 @@ document.getElementById('timestamp').textContent = new Date().toLocaleString();
 
 
     
-    // 更新显示信息
+    // 更新时间轴信息显示
     function updateTimelineInfo() {
         const data = timelineData[currentIndex];
         currentTimeSpan.textContent = `当前提交: #${data.submissionId}`;
@@ -453,7 +455,7 @@ document.getElementById('timestamp').textContent = new Date().toLocaleString();
         updateTimelineInfo();
     });
     
-    // 按钮事件
+    // 上/下一个快照按钮事件
     prevBtn.addEventListener('click', function() {
         if (currentIndex > 0) {
             currentIndex--;
@@ -481,22 +483,22 @@ document.getElementById('timestamp').textContent = new Date().toLocaleString();
     });
   });
 
-  // 全屏功能实现
-  const toggleFullscreenBtn = document.getElementById('toggleFullscreen');
-  const exitFullscreenBtn = document.getElementById('exitFullscreen');
-  
-  toggleFullscreenBtn.addEventListener('click', function() {
-    document.body.classList.add('fullscreen-mode');
-    window.scrollTo(0, 0);
-  });
-  
-  exitFullscreenBtn.addEventListener('click', function() {
+// 全屏功能实现
+const toggleFullscreenBtn = document.getElementById('toggleFullscreen');
+const exitFullscreenBtn = document.getElementById('exitFullscreen');
+
+toggleFullscreenBtn.addEventListener('click', function() {
+  document.body.classList.add('fullscreen-mode');
+  window.scrollTo(0, 0);
+});
+
+exitFullscreenBtn.addEventListener('click', function() {
+  document.body.classList.remove('fullscreen-mode');
+});
+
+// ESC键退出全屏
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape' && document.body.classList.contains('fullscreen-mode')) {
     document.body.classList.remove('fullscreen-mode');
-  });
-  
-  // ESC键退出全屏
-  document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape' && document.body.classList.contains('fullscreen-mode')) {
-      document.body.classList.remove('fullscreen-mode');
-    }
-  });
+  }
+});

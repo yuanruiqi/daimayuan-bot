@@ -1,4 +1,6 @@
+/* index.css: 首页样式 */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap');
+/* 页面基础布局与字体设置 */
 body {
     font-family: 'Inter', sans-serif;
     background: linear-gradient(to right, #e0eafc, #cfdef3);
@@ -8,6 +10,7 @@ body {
     height: 100vh;
     margin: 0;
 }
+/* 主容器样式 */
 .container {
     background-color: white;
     padding: 40px;

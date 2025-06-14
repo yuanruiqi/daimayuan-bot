@@ -10,7 +10,10 @@ from app.config import CONFIG,config
 
 logger = logging.getLogger(__name__)
 
-class SaveDict(MutableMapping):#线程安全&保存
+class SaveDict(MutableMapping):
+    """
+    线程安全的字典，支持定时自动保存到磁盘。
+    """
     def __init__(self, name: str, filepath: str, interval_minutes: float = config.models.save_minute):
         self.name = name
         self.filepath = filepath
@@ -18,9 +21,9 @@ class SaveDict(MutableMapping):#线程安全&保存
         self._lock = threading.RLock()
         self._stop_event = threading.Event()
         self._interval = timedelta(minutes=interval_minutes).total_seconds()
-        
+        # 加载已有数据
         self._load_data()
-        # 启动后台线程，延迟 interval 后首次保存
+        # 启动后台保存线程
         self._thread = threading.Thread(target=self._run_saver, daemon=True)
         self._thread.start()
         self._isclosed = False
@@ -50,7 +53,7 @@ class SaveDict(MutableMapping):#线程安全&保存
         with self._lock:
             return key in self._data
 
-    # —— 其他可选扩展方法 —— #
+    # 其他可选扩展方法
     def clear(self):
         with self._lock:
             self._data.clear()

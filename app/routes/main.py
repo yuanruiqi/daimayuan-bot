@@ -7,13 +7,16 @@ import json
 import app.manager
 from app.config import CONFIG,config
 
+# 创建主蓝图
 main_bp = Blueprint('main', __name__)
 logger = logging.getLogger(__name__)
 
+# 首页路由，处理表单提交和首页渲染
 @main_bp.route("/", methods=["GET", "POST"])
 def index():
     if request.method == "POST":
         try:
+            # 获取表单参数并启动任务
             start_id = int(request.form["start_id"])
             end_id = int(request.form["end_id"])
             cid = int(request.form["cid"])
@@ -22,6 +25,7 @@ def index():
             return "请输入三个整数！"
     return render_template("index.html", error=False)
 
+# 重试查询路由
 @main_bp.route("/retry", methods=["POST"])
 def retry():
     try:
@@ -33,10 +37,12 @@ def retry():
     else:
         return app.manager.start_task(start_id, end_id, cid)
 
+# 等待页面
 @main_bp.route("/waiting")
 def waiting():
     return render_template(config.general.waitingfile)
 
+# 查询进度接口，返回当前任务进度信息
 @main_bp.route("/progress")
 def progress():
     task_id = session.get('task_id')
@@ -54,6 +60,7 @@ def progress():
         })
     return json.dumps({"progress": 0, "status": "not_started"})
 
+# 结果页面，展示任务结果
 @main_bp.route("/result")
 def result():
     task_id = session.get('task_id')

@@ -1,4 +1,5 @@
 /* Task List Stylesheet */
+/* 字体与全局变量 */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap');
 
 :root {
@@ -10,6 +11,7 @@
     --paused-color: #f731e7;
 }
 
+/* 页面基础布局 */
 body {
     font-family: 'Inter', sans-serif;
     background: linear-gradient(to right, #e0eafc, #cfdef3) ;
@@ -18,6 +20,7 @@ body {
     min-height: 100vh;
 }
 
+/* 主容器样式 */
 .container {
     max-width: 1200px;
     margin: 0 auto;
@@ -51,6 +54,7 @@ h1::after {
     border-radius: 2px;
 }
 
+/* 控件区布局 */
 .controls {
     display: flex;
     justify-content: space-between;
@@ -59,6 +63,7 @@ h1::after {
     gap: 15px;
 }
 
+/* 筛选区样式 */
 .filter-section {
     display: flex;
     align-items: center;
@@ -108,6 +113,7 @@ h1::after {
     gap: 5px;
 }
 
+/* 任务表格样式 */
 .task-table {
     width: 100%;
     border-collapse: collapse;
@@ -137,6 +143,7 @@ h1::after {
     font-size: 14px;
 }
 
+/* 状态徽章样式 */
 .status-badge {
     display: inline-block;
     padding: 4px 10px;
@@ -170,6 +177,7 @@ h1::after {
     color: var(--paused-color);
 }
 
+/* 进度条样式 */
 .progress-container {
     width: 100%;
     height: 10px;
@@ -186,6 +194,7 @@ h1::after {
     transition: width 0.5s ease-in-out;
 }
 
+/* 操作按钮样式 */
 .action-btn {
     padding: 8px 15px;
     background-color: var(--primary-color);
@@ -251,6 +260,7 @@ h1::after {
     font-size: 14px;
 }
 
+/* 统计卡片样式 */
 .stats {
     display: flex;
     justify-content: space-around;
@@ -291,6 +301,7 @@ h1::after {
     color: var(--error-color);
 }
 
+/* 通知样式 */
 .notification {
     position: fixed;
     top: 20px;

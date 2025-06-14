@@ -2,9 +2,13 @@ from collections import defaultdict
 import pandas as pd
 import logging
 
+# 获取日志记录器
 logger = logging.getLogger(__name__)
 
 def run(submission_data):
+    """
+    入口函数：处理提交数据，生成DataFrame、用户名列表和提交历史。
+    """
     if not submission_data:
         logger.warning("收到空提交数据")
         return pd.DataFrame(), [], {}
@@ -41,7 +45,7 @@ def run(submission_data):
         # 记录提交历史
         submission_history[username][problem_id].append((submission_id, score_val))
     
-    # 创建DataFrame
+    # 创建DataFrame数据
     df_data = []
     for problem_id, user_scores in problem_scores.items():
         row = [problem_id]
