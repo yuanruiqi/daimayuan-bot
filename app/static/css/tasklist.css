@@ -1,0 +1,355 @@
+/* Task List Stylesheet */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap');
+
+:root {
+    --primary-color: #3498db;
+    --running-color: #1890ff;
+    --completed-color: #52c41a;
+    --cancelled-color: #fa8c16;
+    --error-color: #f5222d;
+    --paused-color: #f731e7;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    background: linear-gradient(to right, #e0eafc, #cfdef3) ;
+    margin: 0;
+    padding: 20px;
+    min-height: 100vh;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    background-color: white;
+    padding: 30px;
+    border-radius: 12px;
+    animation: fadeIn 0.1s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+h1 {
+    text-align: center;
+    color: #333;
+    margin-bottom: 30px;
+    position: relative;
+}
+
+h1::after {
+    content: '';
+    position: absolute;
+    bottom: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80px;
+    height: 4px;
+    background: linear-gradient(to right, var(--primary-color), #4facfe);
+    border-radius: 2px;
+}
+
+.controls {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 25px;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.filter-section {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.filter-btn {
+    padding: 8px 15px;
+    background-color: #f0f0f0;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.filter-btn:hover {
+    background-color: #e0e0e0;
+}
+
+.filter-btn.active {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.search-box {
+    padding: 8px 15px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 14px;
+    min-width: 200px;
+}
+
+.refresh-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.auto-refresh {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.task-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 30px;
+}
+
+.task-table th,
+.task-table td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid #eee;
+}
+
+.task-table th {
+    background-color: #f8f9fa;
+    font-weight: 600;
+    position: sticky;
+    top: 0;
+}
+
+.task-table tr:hover {
+    background-color: #f5f7ff;
+}
+
+.task-id {
+    font-family: monospace;
+    font-size: 14px;
+}
+
+.status-badge {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.status-running {
+    background-color: #e6f7ff;
+    color: var(--running-color);
+}
+
+.status-completed {
+    background-color: #f6ffed;
+    color: var(--completed-color);
+}
+
+.status-cancelled {
+    background-color: #fff2e8;
+    color: var(--cancelled-color);
+}
+
+.status-error {
+    background-color: #fff1f0;
+    color: var(--error-color);
+}
+
+.status-paused {
+    background-color: #fff8e1;
+    color: var(--paused-color);
+}
+
+.progress-container {
+    width: 100%;
+    height: 10px;
+    background-color: #f0f0f0;
+    border-radius: 5px;
+    margin-top: 5px;
+    overflow: hidden;
+}
+
+.progress-bar {
+    height: 100%;
+    background: linear-gradient(to right, #4facfe 0%, #00f2fe 100%);
+    border-radius: 5px;
+    transition: width 0.5s ease-in-out;
+}
+
+.action-btn {
+    padding: 8px 15px;
+    background-color: var(--primary-color);
+    border: none;
+    color: white;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    font-size: 14px;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.action-btn:hover {
+    background-color: #0056b3;
+}
+
+.action-btn.pause {
+    background-color: var(--paused-color);
+}
+
+.action-btn.pause:hover {
+    background-color: #d028c0;
+}
+
+.action-btn.resume {
+    background-color: var(--completed-color);
+}
+
+.action-btn.resume:hover {
+    background-color: #3da812;
+}
+
+.home-btn {
+    display: block;
+    width: 200px;
+    margin: 30px auto 0;
+    padding: 12px;
+    background-color: var(--primary-color);
+    border: none;
+    color: white;
+    font-size: 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    text-align: center;
+    text-decoration: none;
+    transition: background-color 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.home-btn:hover {
+    background-color: #2980b9;
+}
+
+.info-text {
+    text-align: center;
+    color: #777;
+    margin: 20px 0;
+    font-size: 14px;
+}
+
+.stats {
+    display: flex;
+    justify-content: space-around;
+    margin: 25px 0;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.stat-card {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 15px 20px;
+    text-align: center;
+    flex: 1;
+    min-width: 150px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+.stat-card .number {
+    font-size: 24px;
+    font-weight: bold;
+    margin: 5px 0;
+}
+
+.stat-card.running .number {
+    color: var(--running-color);
+}
+
+.stat-card.completed .number {
+    color: var(--completed-color);
+}
+
+.stat-card.paused .number {
+    color: var(--paused-color);
+}
+
+.stat-card.error .number {
+    color: var(--error-color);
+}
+
+.notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 15px 20px;
+    border-radius: 8px;
+    color: white;
+    font-weight: 500;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    z-index: 1000;
+    transform: translateX(120%);
+    transition: transform 0.3s ease-out;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.notification.show {
+    transform: translateX(0);
+}
+
+.notification.success {
+    background-color: var(--completed-color);
+}
+
+.notification.error {
+    background-color: var(--error-color);
+}
+
+.notification.info {
+    background-color: var(--primary-color);
+}
+
+@media (max-width: 768px) {
+    .container {
+        padding: 20px 15px;
+    }
+    
+    .task-table th,
+    .task-table td {
+        padding: 8px 10px;
+        font-size: 14px;
+    }
+    
+    .task-id {
+        font-size: 12px;
+    }
+    
+    .controls {
+        flex-direction: column;
+    }
+    
+    .filter-section {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .refresh-container {
+        width: 100%;
+        justify-content: center;
+    }
+}

@@ -42,9 +42,8 @@ def create_session():
     
     return session
 
-@lru_cache(maxsize=1000)
 def get_contest_problems(session, contest_id):
-    """获取比赛中的所有问题ID和题目名称（使用内存缓存）"""
+    """获取比赛中的所有问题ID和题目名称"""
     url = f"http://oj.daimayuan.top/contest/{contest_id}"
     response = session.get(url)
 
@@ -96,7 +95,7 @@ def fetch_submission(session,submission_id):
         return None
 
 def process_single_submission(session, submission_id, target_contest_id, cache, contest_problems):
-    """处理单个提交，包含缓存逻辑"""
+    """处理单个提交，包含缓存逻辑，支持双重验证"""
     cache_key = f"submission_{submission_id}"
     
     # 尝试从缓存获取
@@ -122,17 +121,26 @@ def process_single_submission(session, submission_id, target_contest_id, cache, 
     try:
         soup = BeautifulSoup(response.text, 'html.parser')
         
-        # 检查是否是目标比赛的提交
+        # --- 双重验证 ---
+        # 1. 原有：通过 problem_link 判断
         problem_link = soup.select_one('td a[href*="/problem/"]')
-        if not problem_link:
-            return None, 'no_match'
-        
-        # 从链接中提取问题ID
-        href = problem_link['href']
-        problem_id = int(href.split('/problem/')[1])
-        
-        # 检查问题是否属于目标比赛
-        if problem_id not in contest_problems:
+        valid_by_problem = False
+        problem_id = None
+        if problem_link:
+            href = problem_link['href']
+            try:
+                problem_id = int(href.split('/problem/')[1])
+            except Exception:
+                problem_id = None
+            if problem_id and problem_id in contest_problems:
+                valid_by_problem = True
+        # 2. 新增：页面中存在 /contest/{target_contest_id} 链接
+        valid_by_contest = False
+        for a in soup.find_all('a', href=True):
+            if f"/contest/{target_contest_id}" in a['href']:
+                valid_by_contest = True
+                break
+        if not (valid_by_problem or valid_by_contest):
             return None, 'no_match'
         
         # 提取用户名和分数
@@ -167,23 +175,18 @@ def run(start_id, end_id, target_contest_id, task_id, progress_callback=None, sh
     if not all(isinstance(x, int) for x in [start_id, end_id, target_contest_id]):
         logger.error("参数类型错误：所有ID必须是整数")
         return 'error', [],{}
-    
     if start_id>end_id:
         logger.warning("发现 l>r")
         return 'error',[],{}
-    
     # 创建会话
     session = create_session()
-    
     # 获取比赛的所有问题ID和名称（使用缓存）
     problem_map = get_contest_problems(session, target_contest_id)
     if not problem_map:
-        logger.warning(f"无法获取比赛 {target_contest_id} 的问题列表")
-        return 'completed', [],{}
-    
+        logger.warning(f"无法获取比赛 {target_contest_id} 的问题列表，将使用双重验证继续采集。")
+        problem_map = {}
     # 创建缓存
     cache = get_cache()
-    
     # 准备提交ID列表
     id_list = [(i, start_id + i) for i in range(end_id - start_id + 1)]
     

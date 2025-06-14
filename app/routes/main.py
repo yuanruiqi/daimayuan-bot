@@ -59,7 +59,8 @@ def result():
     task_id = session.get('task_id')
     if task_id and task_id in app.manager.html:
         logger.info(f"有用户试图访问任务 {task_id}")
-        return render_template_string(app.manager.html[task_id])
+        context = app.manager.html[task_id]
+        return render_template("standing.html", **context)
     else:
         logger.info(f"有用户试图访问result，但是任务不存在或者没完成")
         abort(404)
@@ -72,4 +73,3 @@ def show_404_page(e):
 def visit_by_taskid(task_id):
     if not app.manager.tasks.get(task_id,None):
         abort(404)
-    

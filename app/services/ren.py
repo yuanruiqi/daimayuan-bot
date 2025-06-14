@@ -1,8 +1,8 @@
 from bs4 import BeautifulSoup
-from jinja2 import Template
+from jinja2 import Template, Environment, FileSystemLoader
 import logging
 
-from app.config import CONFIG
+from app.config import CONFIG, config
 
 
 logger = logging.getLogger(__name__)
@@ -28,9 +28,9 @@ def run(df, startid, endid, cid, name_order, submission_history, problem_map):
     timeline_data.sort(key=lambda x: x['time'])
     
     table_html = render_table(df_sorted, name_order, submission_history, problem_map)
-    html = build_html(table_html, startid, endid, cid, timeline_data)
-    logger.info(f"{startid},{endid},{cid},已生成 HTML")
-    return html
+    context = build_html(table_html, startid, endid, cid, timeline_data)
+    logger.info(f"{startid},{endid},{cid},已生成 HTML context")
+    return context
 
 
 def prepare_data(df):
@@ -44,16 +44,16 @@ def sort_and_rank(df):
     return df
 
 def build_html(table_html, startid, endid, cid, timeline_data):
-    with open(CONFIG['general']['outtemplate'], 'r', encoding='utf-8') as f:
-        html_template = f.read()
-    template = Template(html_template)
-    return template.render(
-        table_html=table_html,
-        startid=startid,
-        endid=endid,
-        cid=cid,
-        timeline_data=timeline_data
-    )
+    """
+    返回渲染 standing.html 所需的 context 字典，供 Flask 的 render_template 使用。
+    """
+    return {
+        'table_html': table_html,
+        'startid': startid,
+        'endid': endid,
+        'cid': cid,
+        'timeline_data': timeline_data
+    }
 
 def render_table(df, name_order, submission_history, problem_map):
     """渲染表格为HTML"""
