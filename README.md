@@ -2,9 +2,9 @@
 
 ## 简介 | Introduction
 
-**daimayuan-bot** 是一个用于自动抓取、分析并可视化比赛提交记录的网页应用。支持多用户并发任务、任务持久化、暂停/恢复/取消、排行榜与提交历史可视化、统计分析等功能。适用于 OJ 比赛成绩统计、数据分析和展示。
+**daimayuan-bot** 是一个用于自动抓取、分析并可视化比赛提交记录的网页应用。支持多用户并发任务、任务持久化、暂停/恢复/取消、排行榜与提交历史可视化、统计分析、历史记录等功能。适用于 OJ 比赛成绩统计、数据分析和展示。
 
-**daimayuan-bot** is a web application for automatically fetching, analyzing, and visualizing contest submission records. It supports concurrent multi-user tasks, persistent task management, pause/resume/cancel, ranking board, submission history, and statistical analysis. Suitable for OJ contest result statistics, data analysis, and visualization.
+**daimayuan-bot** is a web application for automatically fetching, analyzing, and visualizing contest submission records. It supports concurrent multi-user tasks, persistent task management, pause/resume/cancel, ranking board, submission history, statistical analysis, historical records and so on. Suitable for OJ contest result statistics, data analysis, and visualization.
 
 ## 特性 | Features
 
@@ -13,7 +13,6 @@
 - 实时进度、暂停、恢复、取消任务 | Real-time progress, pause, resume, cancel
 - 提交历史可视化，分数分布统计 | Submission history visualization, score distribution statistics
 - 响应式网页前端，交互友好 | Responsive web frontend, user-friendly interaction
-- 支持多种 OJ 平台（如 UOJ 等，具体见配置）| Supports multiple OJ platforms (UOJ, etc. — see config)
 
 ## 快速开始 | Quick Start
 
@@ -57,9 +56,9 @@
 ## 注意事项 | Notes
 
 - 请确保配置文件填写正确，尤其是 OJ Cookie 等敏感信息。
-- 任务数据默认保存 10 分钟，超时自动清理。
+- 任务数据默认保存 10 分钟，超时自动清理。可以配置。
 - Make sure to fill in the config file correctly, especially OJ cookies and sensitive info.
-- Task data is kept for 10 minutes by default, and will be cleaned up after timeout.
+- Task data is kept for 10 minutes by default, and will be cleaned up after timeout. It can be configured.
 
 ## 许可证 | License
 
