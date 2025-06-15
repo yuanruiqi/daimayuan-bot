@@ -27,6 +27,56 @@
             Show task list
             </a>
         </div>
+        <div style="text-align: center; margin-top: 20px;">
+            <button id="openStandingTaskModal" class="action-btn" style="background:#17a2b8;color:#fff;">创建榜单任务</button>
+        </div>
+        <!-- 榜单任务创建弹窗 -->
+        <div id="standingTaskModal" class="modal" style="display:none;position:fixed;z-index:1000;left:0;top:0;width:100vw;height:100vh;background:rgba(0,0,0,0.4);align-items:center;justify-content:center;">
+            <div style="background:#fff;padding:30px 40px;border-radius:8px;min-width:320px;max-width:90vw;position:relative;">
+                <button id="closeStandingTaskModal" style="position:absolute;right:10px;top:10px;font-size:20px;background:none;border:none;">&times;</button>
+                <h2 style="margin-bottom:20px;">创建榜单任务</h2>
+                <form id="createStandingTaskForm">
+                    <label>比赛编号: <input type="number" name="contest_id" required></label><br><br>
+                    <label>起始ID: <input type="number" name="start_id" required></label><br><br>
+                    <label>结束ID: <input type="number" name="end_id" required></label><br><br>
+                    <button type="submit" class="action-btn" style="background:#17a2b8;color:#fff;">提交</button>
+                </form>
+                <div id="standingTaskMsg" style="margin-top:10px;color:#28a745;"></div>
+            </div>
+        </div>
+        <script>
+        document.getElementById('openStandingTaskModal').onclick = function() {
+            document.getElementById('standingTaskModal').style.display = 'flex';
+        };
+        document.getElementById('closeStandingTaskModal').onclick = function() {
+            document.getElementById('standingTaskModal').style.display = 'none';
+        };
+        document.getElementById('createStandingTaskForm').onsubmit = function(e) {
+            e.preventDefault();
+            const form = e.target;
+            const data = {
+                contest_id: Number(form.contest_id.value),
+                start_id: Number(form.start_id.value),
+                end_id: Number(form.end_id.value)
+            };
+            fetch('/standing/create', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            })
+            .then(res => res.json())
+            .then(res => {
+                document.getElementById('standingTaskMsg').textContent = '创建成功！';
+                setTimeout(()=>{
+                    document.getElementById('standingTaskModal').style.display = 'none';
+                    document.getElementById('standingTaskMsg').textContent = '';
+                }, 1000);
+            })
+            .catch(()=>{
+                document.getElementById('standingTaskMsg').textContent = '创建失败';
+            });
+        };
+        </script>
     </div>
 </body>
 </html>

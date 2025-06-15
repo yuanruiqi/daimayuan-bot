@@ -73,17 +73,25 @@ function stopAutoRefresh() {
     }
 }
 
-// 获取任务数据
+// 获取任务数据（合并两类任务）
 function fetchTasks() {
-    fetch('/api/tasks')
-        .then(response => response.json())
-        .then(data => {
-            renderTaskList(data.tasks, data.tottime);
-        })
-        .catch(error => {
-            console.error('获取任务数据失败:', error);
-            showNotification('获取任务数据失败', 'error');
+    Promise.all([
+        fetch('/api/tasks').then(r => r.json()),
+        fetch('/api/standing_tasks').then(r => r.json())
+    ]).then(([normal, standing]) => {
+        // 标记任务类型
+        const normalTasks = (normal.tasks || []).map(t => ({...t, task_type: 'normal', remaining: t.remaining ?? 0}));
+        const standingTasks = (standing.tasks || []).map(t => ({...t, task_type: 'standing', remaining: 0}));
+        // 进度百分比兼容
+        normalTasks.forEach(t => { if(typeof t.progress !== 'number') t.progress = 0; });
+        standingTasks.forEach(t => {
+            t.progress = t.end > t.start ? Math.round((t.current-t.start)/(t.end-t.start)*100) : 100;
         });
+        renderTaskList([...normalTasks, ...standingTasks], normal.tottime || 0);
+    }).catch(error => {
+        console.error('获取任务数据失败:', error);
+        showNotification('获取任务数据失败', 'error');
+    });
 }
 
 // 渲染任务列表
@@ -122,23 +130,25 @@ function renderTaskList(tasks, totalTime) {
             case 'paused': statusText = '已暂停'; break;
             default: statusText = task.status;
         }
+        // 任务类型标记
+        let typeBadge = task.task_type === 'standing' ? '<span class="badge bg-info">榜单</span>' : '<span class="badge bg-secondary">普通</span>';
         // 剩余时间小于总时间则显示剩余时间，否则显示"等待"
-        const remainingDisplay = task.remaining<tottime?`${task.remaining}s`:`等待`;
+        const remainingDisplay = task.remaining<totalTime?`${task.remaining}s`:`等待`;
         const remainingPercent = task.remaining > 0 ? 
             Math.min(100, (task.remaining / totalTime) * 100) : 0;
         let actionButton = '';
         // 根据任务状态设置操作按钮
         if (task.status === 'paused') {
-            actionButton = `<button class="action-btn resume" data-id="${task.id}">
+            actionButton = `<button class="action-btn resume" data-id="${task.id}" data-type="${task.task_type}">
                 <i class="fas fa-play"></i> 继续
             </button>`;
         } else if (task.status === 'running') {
-            actionButton = `<button class="action-btn pause" data-id="${task.id}">
+            actionButton = `<button class="action-btn pause" data-id="${task.id}" data-type="${task.task_type}">
                 <i class="fas fa-pause"></i> 暂停
             </button>`;
         }
         row.innerHTML = `
-            <td class="task-id">${task.contest_id}</td>
+            <td class="task-id">${task.contest_id} ${typeBadge}</td>
             <td>
                 <span class="status-badge status-${task.status}">
                     ${statusText}
@@ -158,12 +168,9 @@ function renderTaskList(tasks, totalTime) {
                 </div>
             </td>
             <td>
-                <form action="/selecttask" method="POST" style="display:inline;">
-                    <input type="hidden" name="task_id" value="${task.id}">
-                    <button type="submit" class="action-btn">
-                        <i class="fas fa-eye"></i> 查看
-                    </button>
-                </form>
+                <button class="action-btn view" data-id="${task.id}" data-type="${task.task_type}">
+                    <i class="fas fa-eye"></i> 查看
+                </button>
                 ${actionButton}
             </td>
         `;
@@ -171,10 +178,13 @@ function renderTaskList(tasks, totalTime) {
     });
     // 为暂停和继续按钮设置点击事件
     document.querySelectorAll('.pause').forEach(btn => {
-        btn.addEventListener('click', () => pauseTask(btn.dataset.id));
+        btn.addEventListener('click', () => pauseTask(btn.dataset.id, btn.dataset.type));
     });
     document.querySelectorAll('.resume').forEach(btn => {
-        btn.addEventListener('click', () => resumeTask(btn.dataset.id));
+        btn.addEventListener('click', () => resumeTask(btn.dataset.id, btn.dataset.type));
+    });
+    document.querySelectorAll('.view').forEach(btn => {
+        btn.addEventListener('click', () => viewTask(btn.dataset.id, btn.dataset.type));
     });
     // 启动倒计时
     startCountdown(totalTime);
@@ -201,43 +211,81 @@ function updateStats(tasks) {
 }
 
 // 暂停任务
-function pauseTask(taskId) {
-    fetch(`/api/task/${taskId}/pause`, {
-        method: 'POST'
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            showNotification(data.message, 'success');
-            setTimeout(fetchTasks, 500);
-        } else {
-            showNotification(data.message, 'error');
-        }
-    })
-    .catch(error => {
-        console.error('暂停任务失败:', error);
-        showNotification('暂停任务失败', 'error');
-    });
+function pauseTask(taskId, taskType) {
+    if (taskType === 'standing') {
+        fetch(`/standing/pause/${taskId}`, { method: 'POST' })
+            .then(response => response.json())
+            .then(data => {
+                showNotification('榜单任务已暂停', 'success');
+                setTimeout(fetchTasks, 500);
+            })
+            .catch(error => {
+                showNotification('暂停榜单任务失败', 'error');
+            });
+    } else {
+        fetch(`/api/task/${taskId}/pause`, { method: 'POST' })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showNotification(data.message, 'success');
+                    setTimeout(fetchTasks, 500);
+                } else {
+                    showNotification(data.message, 'error');
+                }
+            })
+            .catch(error => {
+                showNotification('暂停任务失败', 'error');
+            });
+    }
 }
 
 // 恢复任务
-function resumeTask(taskId) {
-    fetch(`/api/task/${taskId}/resume`, {
-        method: 'POST'
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            showNotification(data.message, 'success');
-            setTimeout(fetchTasks, 500);
-        } else {
-            showNotification(data.message, 'error');
-        }
-    })
-    .catch(error => {
-        console.error('继续任务失败:', error);
-        showNotification('继续任务失败', 'error');
-    });
+function resumeTask(taskId, taskType) {
+    if (taskType === 'standing') {
+        fetch(`/standing/start/${taskId}`, { method: 'POST' })
+            .then(response => response.json())
+            .then(data => {
+                showNotification('榜单任务已继续', 'success');
+                setTimeout(fetchTasks, 500);
+            })
+            .catch(error => {
+                showNotification('继续榜单任务失败', 'error');
+            });
+    } else {
+        fetch(`/api/task/${taskId}/resume`, { method: 'POST' })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showNotification(data.message, 'success');
+                    setTimeout(fetchTasks, 500);
+                } else {
+                    showNotification(data.message, 'error');
+                }
+            })
+            .catch(error => {
+                showNotification('继续任务失败', 'error');
+            });
+    }
+}
+
+// 查看任务
+function viewTask(taskId, taskType) {
+    if (taskType === 'standing') {
+        window.location.href = `/standing/data/${taskId}`;
+    } else {
+        // 原有逻辑
+        const form = document.createElement('form');
+        form.action = '/selecttask';
+        form.method = 'POST';
+        form.style.display = 'none';
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'task_id';
+        input.value = taskId;
+        form.appendChild(input);
+        document.body.appendChild(form);
+        form.submit();
+    }
 }
 
 // 显示通知

@@ -2,9 +2,12 @@ from flask import Flask, render_template
 import logging
 from logging.handlers import RotatingFileHandler
 import os
+import signal
+import sys
 
 from app.config import CONFIG,config
 from app.manager import restart_task,init_shared_state
+import app.services.standing
 
 def setup_logger():
     """
@@ -63,4 +66,33 @@ def create_app():
 
     restart_task(app)
 
+    # 注册全局 graceful shutdown
+    import signal
+    from app.manager import tasks,html,stop_cleanup_thread
+    from app.services.standing import standing_task_manager
+    _shutdown_called = {'flag': False}
+    def _global_shutdown(signum, frame):
+        if _shutdown_called['flag']:
+            return
+        _shutdown_called['flag'] = True
+        print('Global graceful shutdown: closing all SaveDicts...')
+        try:
+            stop_cleanup_thread()
+        except Exception as e:
+            print(f'Error stopping cleanup thread: {e}')
+        for d, name in [(tasks, 'tasks'), (html, 'html')]:
+            try:
+                d.close()
+                print(f'{name} closed.')
+            except Exception as e:
+                print(f'Error closing {name}: {e}')
+        # 关闭阶段可能 logger 已不可用，降级为 print
+        try:
+            standing_task_manager.handle_exit(signum, frame)
+        except Exception as e:
+            print(f'Error closing standing_task_manager: {e}')
+        print('Global graceful shutdown finished.')
+        sys.exit(0)
+    signal.signal(signal.SIGTERM, _global_shutdown)
+    signal.signal(signal.SIGINT, _global_shutdown)
     return app

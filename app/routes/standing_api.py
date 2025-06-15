@@ -1,9 +1,7 @@
 from flask import Blueprint, jsonify
-from app.services.standing import StandingTaskManager
-
-# 实例化榜单任务管理器（与 standing.py 保持一致）
+from app.services.standing import standing_task_manager
 standing_api_bp = Blueprint('standing_api', __name__)
-task_manager = StandingTaskManager()
+task_manager = standing_task_manager
 
 @standing_api_bp.route('/api/standing_tasks')
 def get_standing_tasks():
