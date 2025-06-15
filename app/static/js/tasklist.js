@@ -85,7 +85,7 @@ function fetchTasks() {
         // 进度百分比兼容
         normalTasks.forEach(t => { if(typeof t.progress !== 'number') t.progress = 0; });
         standingTasks.forEach(t => {
-            t.progress = t.end > t.start ? Math.round((t.current-t.start)/(t.end-t.start)*100) : 100;
+            t.progress = t.end > t.start ? Math.round((t.current-t.start)/(t.end-t.start+1)*100) : 100;
         });
         renderTaskList([...normalTasks, ...standingTasks], normal.tottime || 0);
     }).catch(error => {

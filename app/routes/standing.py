@@ -1,7 +1,10 @@
 # 榜单任务API接口
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, render_template
 from app.services.standing import StandingTask, standing_task_manager, standing_get, standing_valid, standing_push
 from app.services.down import create_session, get_contest_problems, get_cache, process_single_submission
+# from app.services.anal import anal, ren
+import app.services.anal as anal
+import app.services.ren as ren
 
 bp = Blueprint('standing', __name__)
 task_manager = standing_task_manager
@@ -73,5 +76,23 @@ def list_tasks():
 def get_task_data(task_id):
     task = task_manager.tasks.get(task_id)
     if not task:
-        return jsonify({'error': 'not found'}), 404
-    return jsonify({'results': task.results, 'status': task.status})
+        return "任务不存在", 404
+    # 用anal分析榜单结果，得到df, name_list, submission_history
+    try:
+        df, name_list, submission_history = anal.run(task.results)
+        problem_map = get_problem_map(task.contest_id)
+        context = ren.run(
+            df, task.start_id, task.end_id, task.contest_id, name_list, submission_history, problem_map
+        )
+    except Exception as e:
+        context = {
+            'table_html': f'<div>分析失败{e}</div>',
+            'startid': task.start_id,
+            'endid': task.end_id,
+            'cid': task.contest_id,
+            'timeline_data': []
+        }
+    return render_template(
+        'standing.html',
+        **context
+    )

@@ -2,6 +2,7 @@
 from app.models import SaveDict
 from app.services.down import create_session, get_contest_problems, get_cache, process_single_submission
 import time
+import threading
 
 # 全局只初始化一次，避免重复请求
 _standing_session = create_session()
@@ -33,12 +34,15 @@ class StandingTask:
         self.start_id = start_id
         self.end_id = end_id
         self.contest_id = contest_id
-        self.status = 'pending'  # running, paused, finished, cancelled
+        self.status = 'pending'  # running, paused, completed, cancelled
         self.current_id = start_id
+        self.data = []
         self.results = []
+        self.create_time = time.time()
+        self.done_time = 1e18
 
     def to_dict(self):
-        return {
+        d = {
             'task_id': self.task_id,
             'start_id': self.start_id,
             'end_id': self.end_id,
@@ -46,7 +50,10 @@ class StandingTask:
             'status': self.status,
             'current_id': self.current_id,
             'results': self.results,
+            'create_time': self.create_time,
+            'done_time': self.done_time
         }
+        return d
 
     @classmethod
     def from_dict(cls, d):
@@ -54,23 +61,37 @@ class StandingTask:
         obj.status = d.get('status', 'pending')
         obj.current_id = d.get('current_id', d['start_id'])
         obj.results = d.get('results', [])
+        obj.create_time = d.get('create_time', time.time())
         return obj
 
     def step(self, get_func, valid_func, push_func, should_pause_func=None):
+        # print(self.status)
+        if self.status=='pending':
+            self.status='running'
+            # print(1)
+        if self.status=='completed':
+            if not hasattr(self,'done_time'):
+                self.done_time=1e18
+            self.done_time=min(self.done_time,time.time())
+            return
         if self.status != 'running':
             return
         if should_pause_func and should_pause_func(self):
             self.status = 'paused'
             return
         if self.current_id > self.end_id:
-            self.status = 'finished'
+            self.status = 'completed'
+            self.done_time=min(self.done_time,time.time())
             return
         result = get_func(self.current_id, self.contest_id)
-        if result != 404 and valid_func(result):
+        if result == 404:
+            return
+        if valid_func(result):
             push_func(self.results, result)
         self.current_id += 1
         if self.current_id > self.end_id:
-            self.status = 'finished'
+            self.done_time=min(self.done_time,time.time())
+            self.status = 'completed'
 
     def pause(self):
         if self.status == 'running':
@@ -89,6 +110,9 @@ class StandingTaskManager:
         for k, v in list(self.tasks.items()):
             if not isinstance(v, StandingTask):
                 self.tasks[k] = StandingTask.from_dict(v)
+        self._stop_event = threading.Event()
+        self._thread = threading.Thread(target=self._run_loop, daemon=True)
+        self._thread.start()
 
     def add_task(self, task):
         self.tasks[task.task_id] = task
@@ -116,8 +140,7 @@ class StandingTaskManager:
 
     def step_all(self, get_func=standing_get, valid_func=standing_valid, push_func=standing_push, should_pause_func=None):
         for task in self.tasks.values():
-            if task.status == 'running':
-                task.step(get_func, valid_func, push_func, should_pause_func)
+            task.step(get_func, valid_func, push_func, should_pause_func)
         # 自动保存由 SaveDict 后台线程负责
 
     def _run_loop(self):
