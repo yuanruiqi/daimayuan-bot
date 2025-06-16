@@ -1,4 +1,5 @@
-document.getElementById('timestamp').textContent = new Date().toLocaleString();
+// 修复 standing.js 首行报错（页面无 timestamp 元素）
+// document.getElementById('timestamp').textContent = new Date().toLocaleString();
 
 // DOMContentLoaded事件，初始化所有交互逻辑
 document.addEventListener('DOMContentLoaded', function() {
