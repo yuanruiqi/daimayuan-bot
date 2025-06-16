@@ -96,6 +96,8 @@ class SaveDict(MutableMapping):#线程安全&保存
         with self._lock:
             snapshot = dict(self._data)
         tmp_path = f"{self.filepath}.tmp"
+        # 修复：确保目录存在
+        os.makedirs(os.path.dirname(self.filepath), exist_ok=True)
         try:
             with open(tmp_path, 'wb') as f:
                 pickle.dump(snapshot, f)
