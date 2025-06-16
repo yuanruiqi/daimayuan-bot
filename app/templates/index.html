@@ -66,11 +66,11 @@
             })
             .then(res => res.json())
             .then(res => {
-                document.getElementById('standingTaskMsg').textContent = '创建成功！';
-                setTimeout(()=>{
-                    document.getElementById('standingTaskModal').style.display = 'none';
-                    document.getElementById('standingTaskMsg').textContent = '';
-                }, 1000);
+                if(res.success && res.task_id) {
+                    window.location.href = `/standing/stream_view/${res.task_id}`;
+                } else {
+                    document.getElementById('standingTaskMsg').textContent = res.message || '创建失败';
+                }
             })
             .catch(()=>{
                 document.getElementById('standingTaskMsg').textContent = '创建失败';

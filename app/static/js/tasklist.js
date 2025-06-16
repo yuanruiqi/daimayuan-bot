@@ -268,10 +268,28 @@ function resumeTask(taskId, taskType) {
     }
 }
 
+// 提交任务后自动跳转到流式榜单页面
+function submitTaskForm(form) {
+  fetch(form.action, {
+    method: form.method,
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(Object.fromEntries(new FormData(form)))
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.success && data.task_id) {
+      window.location.href = `/standing/stream_view/${data.task_id}`;
+    } else {
+      alert(data.message || '任务创建失败');
+    }
+  });
+  return false;
+}
+
 // 查看任务
 function viewTask(taskId, taskType) {
     if (taskType === 'standing') {
-        window.location.href = `/standing/data/${taskId}`;
+        window.location.href = `/standing/stream_view/${taskId}`;
     } else {
         // 原有逻辑
         const form = document.createElement('form');
