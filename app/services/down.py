@@ -243,13 +243,13 @@ def run(start_id, end_id, target_contest_id, task_id, progress_callback=None, sh
                 break
             if should_cancel and should_cancel(task_id):
                 logger.info(f"{task_id} 中用户取消：")
-                return 'cancelled', []
+                return 'cancelled', [],{}
             if should_pause and should_pause(task_id):
                 logger.info(f"{task_id} 中用户暂停：")
-                return 'paused', []
+                return 'paused', [],{}
             if executor._shutdown:
                 logger.warning(f"{task_id} 被系统关闭")
-                return 'paused', []
+                return 'paused', [],{}
 
     logger.info(f"{task_id} down 完成，收集到的数据: {submissions_data[:5]}...")  # 只显示前5条数据
     return 'completed', submissions_data, problem_map
