@@ -6,7 +6,7 @@ from app.services.down import create_session, get_contest_problems, get_cache, p
 import app.services.anal as anal
 import app.services.ren as ren
 
-bp = Blueprint('standing', __name__)
+standing_bp = Blueprint('standing', __name__)
 task_manager = standing_task_manager
 
 # 全局只初始化一次，避免重复请求
@@ -29,7 +29,7 @@ def real_get(submission_id, contest_id):
         return None
     return result
 
-@bp.route('/standing/create', methods=['POST'])
+@standing_bp.route('/standing/create', methods=['POST'])
 def create_task():
     data = request.json
     try:
@@ -45,34 +45,34 @@ def create_task():
     task_manager.add_task(task)
     return jsonify({'success': True, 'task_id': task_id, 'status': task.status})
 
-@bp.route('/standing/start/<task_id>', methods=['POST'])
+@standing_bp.route('/standing/start/<task_id>', methods=['POST'])
 def start_task(task_id):
     task_manager.start_task(task_id)
     return jsonify({'task_id': task_id, 'status': task_manager.tasks[task_id].status})
 
-@bp.route('/standing/pause/<task_id>', methods=['POST'])
+@standing_bp.route('/standing/pause/<task_id>', methods=['POST'])
 def pause_task(task_id):
     task_manager.pause_task(task_id)
     return jsonify({'task_id': task_id, 'status': task_manager.tasks[task_id].status})
 
-@bp.route('/standing/cancel/<task_id>', methods=['POST'])
+@standing_bp.route('/standing/cancel/<task_id>', methods=['POST'])
 def cancel_task(task_id):
     task_manager.cancel_task(task_id)
     return jsonify({'task_id': task_id, 'status': task_manager.tasks[task_id].status})
 
-@bp.route('/standing/delete/<task_id>', methods=['POST'])
+@standing_bp.route('/standing/delete/<task_id>', methods=['POST'])
 def delete_task(task_id):
     task_manager.delete_task(task_id)
     return jsonify({'task_id': task_id, 'status': 'deleted'})
 
-@bp.route('/standing/list', methods=['GET'])
+@standing_bp.route('/standing/list', methods=['GET'])
 def list_tasks():
     return jsonify([
         {'task_id': t.task_id, 'status': t.status, 'progress': t.current_id, 'end_id': t.end_id, 'contest_id': t.contest_id}
         for t in task_manager.tasks.values()
     ])
 
-@bp.route('/standing/data/<task_id>', methods=['GET'])
+@standing_bp.route('/standing/data/<task_id>', methods=['GET'])
 def get_task_data(task_id):
     task = task_manager.tasks.get(task_id)
     if not task:

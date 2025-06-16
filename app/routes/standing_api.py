@@ -12,6 +12,7 @@ def get_standing_tasks():
         total = max(1, task.end_id - task.start_id + 1)
         progress = min(100, round((task.current_id - task.start_id) / total * 100))
         remaining_time = task.remaining_time() if hasattr(task, 'remaining_time') else 0
+        print(time.time(),task.done_time,config.task.savetime, max(0,config.task.savetime-(time.time()-task.done_time)))
         tasks.append({
             'id': task.task_id,
             'status': task.status,

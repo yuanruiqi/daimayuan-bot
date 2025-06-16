@@ -81,7 +81,7 @@ function fetchTasks() {
     ]).then(([normal, standing]) => {
         // 标记任务类型
         const normalTasks = (normal.tasks || []).map(t => ({...t, task_type: 'normal', remaining: t.remaining ?? 0}));
-        const standingTasks = (standing.tasks || []).map(t => ({...t, task_type: 'standing', remaining: 0}));
+        const standingTasks = (standing.tasks || []).map(t => ({...t, task_type: 'standing', remaining: t.remaining ?? 0}));
         // 进度百分比兼容
         normalTasks.forEach(t => { if(typeof t.progress !== 'number') t.progress = 0; });
         standingTasks.forEach(t => {
@@ -135,7 +135,7 @@ function renderTaskList(tasks, totalTime) {
         // 剩余时间小于总时间则显示剩余时间，否则显示"等待"
         const remainingDisplay = task.remaining<totalTime?`${task.remaining}s`:`等待`;
         const remainingPercent = task.remaining > 0 ? 
-            Math.min(100, (task.remaining / totalTime) * 100) : 0;
+            Math.min(100, (task.remaining / totalTime) * 100) : 0.00;
         let actionButton = '';
         // 根据任务状态设置操作按钮
         if (task.status === 'paused') {
