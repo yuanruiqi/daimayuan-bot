@@ -5,6 +5,7 @@ from app.services.down import create_session, get_contest_problems, get_cache, p
 # from app.services.anal import anal, ren
 import app.services.anal as anal
 import app.services.ren as ren
+import uuid
 
 standing_bp = Blueprint('standing', __name__)
 task_manager = standing_task_manager
@@ -38,7 +39,7 @@ def create_task():
         contest_id = int(data['contest_id'])
     except (KeyError, ValueError, TypeError):
         return jsonify({'success': False, 'message': '参数错误'}), 400
-    task_id = f"{contest_id}_{start_id}_{end_id}"
+    task_id = f"{contest_id}_{start_id}_{end_id}_{str(uuid.uuid4().replace('-','_'))}"
     if task_id in task_manager.tasks:
         return jsonify({'success': False, 'message': '任务已存在'}), 400
     task = StandingTask(task_id, start_id, end_id, contest_id)
