@@ -145,9 +145,10 @@ class StandingTaskManager:
         # 自动保存由 SaveDict 后台线程负责
 
     def _run_loop(self):
+        interval = getattr(config.task, 'push_interval', 1)
         while not self._stop_event.is_set():
             self.step_all()
-            time.sleep(1)
+            time.sleep(interval)
 
     def handle_exit(self, signum, frame):
         for task in self.tasks.values():

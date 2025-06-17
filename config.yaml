@@ -42,3 +42,4 @@ task:
   savetime: 1200  # 任务保存时间（秒）
   max_runtime: 7200  # 任务最大运行时间（秒）
   cleanup_interval: 60  # 清理检查间隔（秒）
+  push_interval: 5  # 数据推送间隔（秒，可配置）

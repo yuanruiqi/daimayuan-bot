@@ -11,47 +11,33 @@
   <script src="https://unpkg.com/tablesort@5.3.0/dist/tablesort.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chroma-js@2.4.2/chroma.min.js"></script>
   <script src="{{ url_for('static', filename='js/standing-anim.js') }}"></script>
-  <style>
-    @keyframes scoreChange { 0% { background-color: transparent; } 10% { transform: scale(1.2); background-color: transparent; } 100% { background-color: transparent; } }
-    .score-change { display: inline-block; animation: scoreChange 0.45s ease-out; }
-    /* 按钮样式与 standing.css 风格一致 */
-.standing-btn, #pause-btn {
-  display: inline-block;
-  padding: 6px 18px;
-  margin: 0 4px;
-  background: #fff;
-  border: 1px solid #bbb;
-  border-radius: 4px;
-  color: #333;
-  font-size: 15px;
-  cursor: pointer;
-  transition: background 0.2s, color 0.2s;
-  text-decoration: none;
-}
-.standing-btn:hover, #pause-btn:hover {
-  background: #f0f0f0;
-  color: #1976d2;
-  border-color: #1976d2;
-}
-  </style>
 </head>
 <body>
-<div class="container py-4">
-  <h2 class="mb-3">流式榜单</h2>
-  <div class="mb-2">
-    <input type="text" id="searchInput" class="form-control" placeholder="搜索用户名...">
+<div class="main-container">
+  <div class="content-wrapper">
+    <div class="header">
+      <h1>流式榜单</h1>
+    </div>
+    <div class="card">
+      <div class="mb-2">
+        <input type="text" id="searchInput" class="form-control" placeholder="搜索用户名...">
+      </div>
+      <div class="mb-2 d-flex align-items-center">
+        <button id="prevSnapshot" class="btn btn-outline-primary me-2">◀</button>
+        <input type="range" id="timelineSlider" min="0" max="100" value="100" class="form-range flex-grow-1">
+        <button id="nextSnapshot" class="btn btn-outline-primary ms-2">▶</button>
+        <span id="timelineCurrent" class="ms-3">当前提交: --</span>
+      </div>
+      <div id="stream-table-container"></div>
+      <div class="d-flex justify-content-center gap-3 mb-3">
+        <button id="pause-btn" class="standing-btn">暂停获取</button>
+        <a href="/standing/data/{{ task_id }}" id="fixed-btn" class="standing-btn">跳转到固定榜单</a>
+      </div>
+    </div>
+    <div class="footer">
+      <p>数据流式刷新 | <a href="/tasklist" style="color: #007BFF; text-decoration: none;">查看其他任务</a></p>
+    </div>
   </div>
-  <div class="mb-2 d-flex align-items-center">
-    <button id="prevSnapshot" class="btn btn-outline-primary me-2">◀</button>
-    <input type="range" id="timelineSlider" min="0" max="100" value="100" class="form-range flex-grow-1">
-    <button id="nextSnapshot" class="btn btn-outline-primary ms-2">▶</button>
-    <span id="timelineCurrent" class="ms-3">当前提交: --</span>
-  </div>
-  <div id="stream-table-container"></div>
-  <div style="margin-bottom: 1em;">
-  <button id="pause-btn" class="standing-btn" style="margin-right: 1em;">暂停获取</button>
-  <a href="/standing/data/{{ task_id }}" id="fixed-btn" class="standing-btn">跳转到固定榜单</a>
-</div>
 </div>
 <script>
 let timelineData = [], tableHeader = [], users = [], problems = [], problemMap = {}, lastScoreSnapshot = {}, lastRankSnapshot = [];

@@ -682,7 +682,7 @@ input:checked + .slider:before {
 }
 @keyframes scoreChange {
   0% { background-color: transparent; }
-  10%   { transform: scale(2);background-color: rgb(246, 255, 0); }
+  10%   { transform: scale(2); background-color: transparent; }
   100% { background-color: transparent; }
 }
 .score-change {
@@ -701,4 +701,33 @@ input:checked + .slider:before {
     width: 100%;
     justify-content: center;
   }
+}
+
+/* standing-btn: 兼容 standing 页风格的自定义按钮 */
+.standing-btn {
+  display: inline-block;
+  padding: 8px 28px;
+  background: var(--card-bg, #fff);
+  border: 1.5px solid var(--primary-color, #2c6fbb);
+  border-radius: 8px;
+  color: var(--primary-color, #2c6fbb);
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, border-color 0.2s, box-shadow 0.2s;
+  box-shadow: 0 2px 8px rgba(44,111,187,0.04);
+  text-decoration: none;
+  outline: none;
+}
+.standing-btn:hover, .standing-btn:focus {
+  background: var(--primary-color, #2c6fbb);
+  color: #fff;
+  border-color: var(--primary-color, #2c6fbb);
+  box-shadow: 0 4px 16px rgba(44,111,187,0.10);
+  text-decoration: none;
+}
+.standing-btn:active {
+  background: var(--secondary-color, #3498db);
+  color: #fff;
+  border-color: var(--secondary-color, #3498db);
 }
