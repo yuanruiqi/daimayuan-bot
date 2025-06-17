@@ -95,4 +95,13 @@ def create_app():
         sys.exit(0)
     signal.signal(signal.SIGTERM, _global_shutdown)
     signal.signal(signal.SIGINT, _global_shutdown)
+
+    # 启动榜单任务清理线程（只启动一次）
+    try:
+        from app.services.standing import start_standing_task_cleanup
+        start_standing_task_cleanup()
+    except Exception as e:
+        import logging
+        logging.getLogger(__name__).error(f"启动榜单任务清理线程失败: {e}")
+
     return app

@@ -1,6 +1,7 @@
 # 榜单任务管理与执行逻辑（SaveDict用于任务池，任务为普通对象）
 from app.models import SaveDict
 from app.services.down import create_session, get_contest_problems, get_cache, process_single_submission
+from app.config import config
 import time
 import threading
 
@@ -154,6 +155,33 @@ class StandingTaskManager:
                 task.pause()
         print('StandingTaskManager: graceful shutdown')
         self.tasks.close()
+
+# --------- 榜单任务定期清理机制 ---------
+def _cleanup_standing_tasks_thread(manager, interval=None, savetime=None):
+    if interval is None:
+        interval = getattr(config.task, 'cleanup_interval', 60)
+    if savetime is None:
+        savetime = getattr(config.task, 'savetime', 1200)
+    while True:
+        now = time.time()
+        to_delete = []
+        for tid, task in list(manager.tasks.items()):
+            # 只清理已完成/取消/错误且超时的榜单任务
+            done_time = getattr(task, 'done_time', getattr(task, 'donetime', getattr(task, 'create_time', 0)))
+            if getattr(task, 'status', None) in ['completed', 'cancelled', 'error']:
+                if now - done_time >= savetime:
+                    to_delete.append(tid)
+        for tid in to_delete:
+            manager.delete_task(tid)
+        time.sleep(interval)
+
+def start_standing_task_cleanup(manager=None):
+    if manager is None:
+        from app.services.standing import standing_task_manager
+        manager = standing_task_manager
+    t = threading.Thread(target=_cleanup_standing_tasks_thread, args=(manager,), daemon=True)
+    t.start()
+    return t
 
 # 全局唯一榜单任务管理器实例
 standing_task_manager = StandingTaskManager()
