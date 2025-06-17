@@ -143,6 +143,46 @@ h1::after {
     font-size: 14px;
 }
 
+/* 修复进度和剩余时间列抽动问题 */
+.task-progress-cell, .task-remaining-cell {
+    min-width: 90px;
+    max-width: 120px;
+    text-align: left;
+    font-family: inherit;
+    letter-spacing: 0;
+    white-space: nowrap;
+}
+
+.progress-align-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    min-width: 70px;
+    max-width: 120px;
+}
+
+.progress-percent {
+    min-width: 48px;
+    text-align: left;
+    font-variant-numeric: tabular-nums;
+    font-family: inherit;
+    margin-bottom: 2px;
+}
+
+.progress-container {
+    width: 100%;
+    min-width: 60px;
+    max-width: 120px;
+    margin-left: 0;
+    margin-right: 0;
+}
+
+.task-progress-cell span, .task-remaining-cell span {
+    display: inline-block;
+    min-width: 48px;
+    text-align: left;
+}
+
 /* 状态徽章样式 */
 .status-badge {
     display: inline-block;

@@ -133,7 +133,7 @@ function renderTaskList(tasks, totalTime) {
         // 任务类型标记
         let typeBadge = task.task_type === 'standing' ? '<span class="badge bg-info">榜单</span>' : '<span class="badge bg-secondary">普通</span>';
         // 剩余时间小于总时间则显示剩余时间，否则显示"等待"
-        const remainingDisplay = task.remaining<totalTime?`${task.remaining}s`:`等待`;
+        const remainingDisplay = task.remaining<totalTime?`${Math.round(task.remaining,2)}s`:`等待`;
         const remainingPercent = task.remaining > 0 ? 
             Math.min(100, (task.remaining / totalTime) * 100) : 0.00;
         let actionButton = '';
@@ -155,14 +155,15 @@ function renderTaskList(tasks, totalTime) {
                 </span>
             </td>
             <td>${task.start} - ${task.end}</td>
-            <td>
-                ${task.progress}%
-                <div class="progress-container">
-                    <div class="progress-bar" style="width: ${task.progress}%"></div>
+            <td class="task-progress-cell">
+                <div class="progress-align-wrap">
+                  <span class="progress-percent">${task.progress}%</span>
+                  <div class="progress-container">
+                      <div class="progress-bar" style="width: ${task.progress}%"></div>
+                  </div>
                 </div>
             </td>
-            <td>
-                ${remainingDisplay}
+            <td class="task-remaining-cell"><span>${remainingDisplay}</span>
                 <div class="progress-container">
                     <div class="progress-bar" style="width: ${remainingPercent}%"></div>
                 </div>
