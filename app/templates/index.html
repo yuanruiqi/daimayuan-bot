@@ -5,6 +5,27 @@
     <title>DMYBOT</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}">
+    <style>
+        .bottom-btn {
+            display: inline-block;
+            background: linear-gradient(90deg, #17a2b8 60%, #138496 100%);
+            color: #fff;
+            border: none;
+            border-radius: 25px;
+            padding: 12px 36px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            box-shadow: 0 2px 8px rgba(23,162,184,0.12);
+            cursor: pointer;
+            transition: background 0.2s, box-shadow 0.2s, transform 0.1s;
+            margin: 10px auto 0 auto;
+        }
+        .bottom-btn:hover {
+            background: linear-gradient(90deg, #138496 60%, #17a2b8 100%);
+            box-shadow: 0 4px 16px rgba(23,162,184,0.18);
+            transform: translateY(-2px) scale(1.04);
+        }
+    </style>
 </head>
 <body>
     <div class="container">
@@ -28,18 +49,18 @@
             </a>
         </div>
         <div style="text-align: center; margin-top: 20px;">
-            <button id="openStandingTaskModal" class="action-btn" style="background:#17a2b8;color:#fff;">创建榜单任务</button>
+            <button id="openStandingTaskModal" class="bottom-btn">Create auto standing</button>
         </div>
         <!-- 榜单任务创建弹窗 -->
         <div id="standingTaskModal" class="modal" style="display:none;position:fixed;z-index:1000;left:0;top:0;width:100vw;height:100vh;background:rgba(0,0,0,0.4);align-items:center;justify-content:center;">
             <div style="background:#fff;padding:30px 40px;border-radius:8px;min-width:320px;max-width:90vw;position:relative;">
                 <button id="closeStandingTaskModal" style="position:absolute;right:10px;top:10px;font-size:20px;background:none;border:none;">&times;</button>
-                <h2 style="margin-bottom:20px;">创建榜单任务</h2>
+                <h2 style="margin-bottom:20px;">New auto standing</h2>
                 <form id="createStandingTaskForm">
-                    <label>比赛编号: <input type="number" name="contest_id" required></label><br><br>
-                    <label>起始ID: <input type="number" name="start_id" required></label><br><br>
-                    <label>结束ID: <input type="number" name="end_id" required></label><br><br>
-                    <button type="submit" class="action-btn" style="background:#17a2b8;color:#fff;">提交</button>
+                    <label>contest id: <input type="number" name="contest_id" required></label><br><br>
+                    <label>start id: <input type="number" name="start_id" required></label><br><br>
+                    <label>end id: <input type="number" name="end_id" required></label><br><br>
+                    <button type="submit" class="bottom-btn">Submit</button>
                 </form>
                 <div id="standingTaskMsg" style="margin-top:10px;color:#28a745;"></div>
             </div>
