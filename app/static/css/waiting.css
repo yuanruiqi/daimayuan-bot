@@ -1,4 +1,6 @@
-/* waiting.css */
+/* waiting.css: 提取自 waiting.html 的样式 */
+
+/* 页面基础布局与字体设置 */
 body {
     font-family: 'Inter', sans-serif;
     background: linear-gradient(to right, #e0eafc, #cfdef3);
@@ -8,6 +10,8 @@ body {
     height: 100vh;
     margin: 0;
 }
+
+/* 主容器样式 */
 .container {
     background-color: white;
     padding: 40px;
@@ -17,8 +21,10 @@ body {
     width: 100%;
     text-align: center;
 }
+
+/* 进度条相关样式 */
 .progress-container {
-    margin: 30px 0;
+    margin: 30px 0; /* 上下外边距30px */
 }
 .progress-bar {
     height: 20px;
@@ -33,6 +39,8 @@ body {
     width: 0%;
     transition: width 0.5s ease;
 }
+
+/* 状态与信息文本样式 */
 .status-text {
     margin-top: 15px;
     font-size: 16px;
@@ -43,16 +51,18 @@ body {
     font-size: 14px;
     color: #777;
 }
-.cancel-btn, .home-btn ,.pause-btn,.resume-btn{
-    display: block;
-    margin: 20px auto 0;
-    padding: 12px 30px;
-    border: none;
-    border-radius: 6px;
-    font-size: 16px;
-    cursor: pointer;
-    transition: background-color 0.3s;
-    color: white;
+
+/* 按钮样式 */
+.cancel-btn, .home-btn, .pause-btn, .resume-btn {
+    display: block; /* 块级显示 */
+    margin: 20px auto 0; /* 上外边距20px，左右自动 */
+    padding: 12px 30px; /* 内边距12px 30px */
+    border: none; /* 无边框 */
+    border-radius: 6px; /* 边角圆润 */
+    font-size: 16px; /* 字体大小16px */
+    cursor: pointer; /* 鼠标指针样式 */
+    transition: background-color 0.3s; /* 背景色变化过渡 */
+    color: white; /* 字体颜色为白色 */
 }
 .cancel-btn {
     background-color: #e74c3c;

@@ -1,3 +1,6 @@
+/* 404页面样式 */
+
+/* 页面基础布局与字体设置 */
 body {
     font-family: 'Inter', sans-serif;
     background: linear-gradient(to right, #e0eafc, #cfdef3);
@@ -7,6 +10,8 @@ body {
     height: 100vh;
     margin: 0;
 }
+
+/* 错误容器样式 */
 .error-container {
     text-align: center;
     padding: 40px;
@@ -15,6 +20,8 @@ body {
     border-radius: 12px;
     box-shadow: 0 8px 30px rgba(0,0,0,0.1);
 }
+
+/* 错误码样式 */
 .error-code {
     font-size: 100px;
     font-weight: bold;
@@ -22,11 +29,15 @@ body {
     margin-bottom: 20px;
     letter-spacing: 8px;
 }
+
+/* 错误信息样式 */
 .error-message {
     font-size: 24px;
     color: #333;
     margin-bottom: 30px;
 }
+
+/* 返回首页按钮样式 */
 .home-link {
     display: inline-block;
     padding: 12px 30px;
@@ -36,6 +47,7 @@ body {
     border-radius: 6px;
     transition: background-color 0.3s ease;
 }
+
 .home-link:hover {
     background-color: #0056b3;
 }

@@ -11,7 +11,9 @@ from app.models import SaveDict, Task
 from app.services import run
 from app.config import CONFIG,config
 
-# 共享状态
+# 共享状态：任务和HTML缓存
+# tasks: 所有任务对象的持久化存储
+# html: 任务结果HTML的持久化存储
 tasks = SaveDict("tasks", "./databuf/tasks.pkl")
 html = SaveDict("html", "./databuf/html.pkl")
 
@@ -22,39 +24,34 @@ cleanup_thread = None
 cleanup_running = False
 
 def cleanup_tasks():
-    """定期清理已完成或过期的任务"""
+    """
+    定期清理已完成或过期的任务。
+    """
     global cleanup_running
     while cleanup_running:
         try:
             current_time = time.time()
             tasks_to_remove = []
-            
             # 检查所有任务
             for task_id, task in tasks.items():
-                # 检查任务是否已完成且超过保存时间
+                # 检查任务是否已完成且超出保存时间
                 if task.status in ['completed', 'cancelled', 'error']:
                     if current_time - task.donetime >= config.task.savetime:
                         tasks_to_remove.append(task_id)
-                # # 检查任务是否运行时间过长
-                # elif task.status == 'running' and current_time - task.createtime >= config.task.max_runtime:
-                #     task.status = 'error'
-                #     task.error = '任务运行超时'
-                #     tasks_to_remove.append(task_id)
-            
             # 批量删除过期任务
             for task_id in tasks_to_remove:
                 pop(task_id)
                 logger.info(f"清理过期任务: {task_id}")
-            
-            # 等待下一次清理
+            # 等待下次清理
             time.sleep(config.task.cleanup_interval)
-            
         except Exception as e:
             logger.error(f"任务清理过程出错: {e}")
             time.sleep(config.task.cleanup_interval)
 
 def start_cleanup_thread():
-    """启动清理线程"""
+    """
+    启动清理线程。
+    """
     global cleanup_thread, cleanup_running
     if cleanup_thread is None or not cleanup_thread.is_alive():
         cleanup_running = True
@@ -63,7 +60,9 @@ def start_cleanup_thread():
         logger.info("任务清理线程已启动")
 
 def stop_cleanup_thread():
-    """停止清理线程"""
+    """
+    停止清理线程。
+    """
     global cleanup_running
     cleanup_running = False
     if cleanup_thread and cleanup_thread.is_alive():
@@ -71,6 +70,9 @@ def stop_cleanup_thread():
         logger.info("任务清理线程已停止")
 
 def init_shared_state(app):
+    """
+    初始化共享状态，包括任务和HTML缓存的加载，以及清理线程的启动。
+    """
     global tasks, html
     
     # 创建数据目录
@@ -89,6 +91,9 @@ def init_shared_state(app):
     signal.signal(signal.SIGINT, cleanup_on_shutdown)
 
 def pop(id):
+    """
+    删除指定ID的任务和HTML缓存。
+    """
     if id in tasks:
         tasks.pop(id, None)
     if id in html:
@@ -96,6 +101,9 @@ def pop(id):
     logger.info(f"任务{id}被删除")
 
 def run_in_background(start_id, end_id, cid, task_id):
+    """
+    在后台线程中运行爬取任务。
+    """
     try:
         logger.info(f"启动后台任务: {task_id} | {start_id}-{end_id} | cid={cid}")
         
@@ -127,6 +135,9 @@ def run_in_background(start_id, end_id, cid, task_id):
         tasks[task_id].pause_flag = False
 
 def update_progress_callback(task_id):
+    """
+    更新任务进度的回调函数。
+    """
     def callback(current, total, current_id):
         if task_id in tasks:
             progress = int(current / total * 100)
@@ -135,6 +146,9 @@ def update_progress_callback(task_id):
     return callback
 
 def start_task(start_id, end_id, cid, task_id=None, working_outside=False):
+    """
+    启动一个新任务或恢复一个已存在的任务。
+    """
     if not task_id:
         task_id = f"{start_id}-{end_id}-{cid}-{str(uuid.uuid4())}"
         logger.info(f"生成新的{task_id}")
@@ -158,6 +172,9 @@ def start_task(start_id, end_id, cid, task_id=None, working_outside=False):
         return redirect(url_for("main.waiting"))
 
 def restart_task(app):
+    """
+    恢复所有未完成的任务，删除所有过期的已完成或已取消任务。
+    """
     with app.app_context():
         deleted_tasks = []
         for task_id in tasks.keys():
@@ -177,12 +194,21 @@ def restart_task(app):
             pop(task_id)
 
 def should_cancel(task_id):
+    """
+    检查任务是否被请求取消。
+    """
     return tasks.get(task_id, None) and tasks[task_id].cancel_flag
 
 def should_pause(task_id):
+    """
+    检查任务是否被请求暂停。
+    """
     return tasks.get(task_id, None) and tasks[task_id].pause_flag
 
 def pause_task(task_id):
+    """
+    暂停指定ID的任务。
+    """
     if not task_id or task_id not in tasks:
         logger.warning(f"用户试图暂停任务，但task_id不存在")
         return jsonify(success=False, message="task id不存在")
@@ -192,6 +218,9 @@ def pause_task(task_id):
     return jsonify(success=True, message="任务已暂停")
 
 def resume_task(task_id):
+    """
+    恢复指定ID的任务。
+    """
     if not task_id or task_id not in tasks:
         logger.warning(f"用户试图重启任务，但task_id不存在")
         return jsonify(success=False, message="任务不存在")
@@ -208,6 +237,9 @@ def resume_task(task_id):
     return jsonify(success=False, message="非可恢复状态"+str(tasks[task_id].status))
 
 def cancel_task(task_id):
+    """
+    取消指定ID的任务。
+    """
     if not task_id or task_id not in tasks:
         logger.warning(f"用户试图取消任务但失败: {task_id}")
         return jsonify(success=False, message="未找到任务ID")
@@ -216,7 +248,9 @@ def cancel_task(task_id):
     return jsonify(success=True, message="任务取消请求已发送")
 
 def cleanup_on_shutdown(signum, frame):
-    """程序关闭时的清理工作"""
+    """
+    程序关闭时的清理工作。
+    """
     logger.info("正在关闭程序...")
     
     # 停止清理线程

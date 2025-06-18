@@ -1,4 +1,6 @@
 /* standing.css: 完整提取自 standing.html 的 <style> 部分 */
+
+/* 主题色与全局变量定义 */
 :root {
   --primary-color: #2c6fbb;
   --secondary-color: #3498db;
@@ -9,6 +11,8 @@
   --text-color: #34495e;
   --card-bg: rgba(255, 255, 255, 0.95);
 }
+
+/* 页面基础布局与字体设置 */
 body {
   font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   padding: 20px;
@@ -20,6 +24,8 @@ body {
   align-items: center;
   margin: 0;
 }
+
+/* 主容器布局 */
 .main-container {
   max-width: 1200px;
   width: 100%;
@@ -28,6 +34,8 @@ body {
   flex-direction: column;
   gap: 20px;
 }
+
+/* 内容包裹层样式 */
 .content-wrapper {
   display: flex;
   flex-direction: column;
@@ -39,6 +47,8 @@ body {
   position: relative;
   overflow: hidden;
 }
+
+/* 顶部标题栏样式 */
 .header {
   background: var(--card-bg);
   color: var(--dark-color);
@@ -55,6 +65,8 @@ body {
   margin: 0;
   color: var(--primary-color);
 }
+
+/* 卡片通用样式 */
 .card {
   background-color: var(--card-bg);
   border-radius: 12px;
@@ -64,6 +76,8 @@ body {
   position: relative;
   z-index: 2;
 }
+
+/* 控件区样式 */
 .controls {
   display: flex;
   justify-content: space-between;
@@ -157,6 +171,8 @@ tbody tr {
 tbody tr:hover {
   background-color: #f0f8ff;
 }
+
+/* 统计区布局 */
 .stats-container {
   display: flex;
   flex-direction: column;
@@ -213,7 +229,8 @@ tbody tr:hover {
   position: relative;
   z-index: 2;
 }
-/* 排序指示器 */
+
+/* 排序指示器样式 */
 th[data-sort]::after {
   content: "↕";
   margin-left: 5px;
@@ -228,6 +245,7 @@ th[data-sort].sort-desc::after {
   content: "↓";
   opacity: 1;
 }
+
 /* 全屏模式样式 */
 body.fullscreen-mode {
   padding: 10px;
@@ -254,6 +272,7 @@ body.fullscreen-mode #exitFullscreen {
 body.fullscreen-mode #toggleFullscreen {
   display: none;
 }
+
 /* 响应式设计 */
 @media (max-width: 768px) {
   .stats-container {
@@ -286,6 +305,7 @@ body.fullscreen-mode #toggleFullscreen {
     padding: 15px;
   }
 }
+
 /* 分数单元格样式 */
 .score-cell {
   font-weight: 600;
@@ -337,7 +357,8 @@ tr:nth-child(3) .rank-cell {
   width: 0%;
   transition: width 0.5s ease;
 }
-/* 装饰元素 */
+
+/* 装饰元素样式 */
 .decor-element {
   position: absolute;
   z-index: 1;
@@ -361,7 +382,8 @@ tr:nth-child(3) .rank-cell {
   left: -100px;
   transform: rotate(45deg);
 }
-/* 提交历史样式 */
+
+/* 提交历史弹窗样式 */
 .submission-history {
   display: none;
   position: absolute;
@@ -404,6 +426,7 @@ tr:nth-child(3) .rank-cell {
 .score-cell:hover .submission-history {
   display: block;
 }
+
 /* 表格标题样式 */
 th {
   white-space: nowrap;
@@ -416,6 +439,7 @@ th:hover {
   white-space: normal;
   word-break: break-word;
 }
+
 /* 添加排序样式 */
 th.sort-asc::after {
   content: ' ↑';
@@ -425,6 +449,7 @@ th.sort-desc::after {
   content: ' ↓';
   color: #fff;
 }
+
 /* 分数列样式 */
 td[data-sort] {
   /* font-family: monospace; */
@@ -432,6 +457,7 @@ td[data-sort] {
   padding-right: 20px;
   font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
+
 /* 时间轴样式 */
 .timeline-container {
   margin-top: 20px;
@@ -513,6 +539,7 @@ td[data-sort] {
   font-size: 14px;
   margin-top: 10px;
 }
+
 /* 响应式调整 */
 @media (max-width: 768px) {
   .timeline-controls {
@@ -529,7 +556,8 @@ td[data-sort] {
     gap: 5px;
   }
 }
-/* 速度控制样式 */
+
+/* 播放速度控制样式 */
 .speed-control {
   display: flex;
   align-items: center;
@@ -553,6 +581,7 @@ td[data-sort] {
   border-color: var(--secondary-color);
   box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.2);
 }
+
 /* 播放按钮样式 */
 #playPauseBtn.playing {
   background-color: var(--accent-color);
@@ -560,6 +589,7 @@ td[data-sort] {
 #playPauseBtn.playing:hover {
   background-color: #c0392b;
 }
+
 /* 动画控制开关样式 */
 .animation-control {
   display: flex;
@@ -614,6 +644,7 @@ input:checked + .slider:before {
 .slider.round:before {
   border-radius: 50%;
 }
+
 /* 排名变动动画样式 */
 @keyframes rankDown {
   0% {
@@ -651,13 +682,14 @@ input:checked + .slider:before {
 }
 @keyframes scoreChange {
   0% { background-color: transparent; }
-  10%   { transform: scale(2);background-color: rgb(246, 255, 0); }
+  10%   { transform: scale(2); background-color: transparent; }
   100% { background-color: transparent; }
 }
 .score-change {
   display: inline-block;  
   animation: scoreChange 0.45s ease-out;
 }
+
 /* 响应式调整 */
 @media (max-width: 768px) {
   .timeline-controls {
@@ -669,4 +701,33 @@ input:checked + .slider:before {
     width: 100%;
     justify-content: center;
   }
+}
+
+/* standing-btn: 兼容 standing 页风格的自定义按钮 */
+.standing-btn {
+  display: inline-block;
+  padding: 8px 28px;
+  background: var(--card-bg, #fff);
+  border: 1.5px solid var(--primary-color, #2c6fbb);
+  border-radius: 8px;
+  color: var(--primary-color, #2c6fbb);
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, border-color 0.2s, box-shadow 0.2s;
+  box-shadow: 0 2px 8px rgba(44,111,187,0.04);
+  text-decoration: none;
+  outline: none;
+}
+.standing-btn:hover, .standing-btn:focus {
+  background: var(--primary-color, #2c6fbb);
+  color: #fff;
+  border-color: var(--primary-color, #2c6fbb);
+  box-shadow: 0 4px 16px rgba(44,111,187,0.10);
+  text-decoration: none;
+}
+.standing-btn:active {
+  background: var(--secondary-color, #3498db);
+  color: #fff;
+  border-color: var(--secondary-color, #3498db);
 }

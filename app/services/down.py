@@ -12,12 +12,14 @@ from functools import lru_cache
 
 from app.config import CONFIG
 
+# 获取日志记录器
 logger = logging.getLogger(__name__)
 
 def create_session():
-    """创建并配置具有重试机制和连接池的请求会话"""
+    """
+    创建并配置具有重试机制和连接池的请求会话。
+    """
     session = requests.Session()
-    
     # 配置重试策略
     retry_config = CONFIG['down']['retry']
     retry_strategy = Retry(
@@ -25,31 +27,27 @@ def create_session():
         backoff_factor=retry_config['backoff_factor'],
         status_forcelist=retry_config['status_forcelist']
     )
-    
     # 配置连接池
     adapter = HTTPAdapter(max_retries=retry_strategy)
     session.mount("http://", adapter)
     session.mount("https://", adapter)
-    
     # 设置请求头
     session.headers.update(CONFIG['down']['headers'])
-    
     # 设置cookies
     if CONFIG['down']['cookies']:
         session.cookies.update(CONFIG['down']['cookies'])
     else:
         logger.warning("没有设置 cookies")
-    
     return session
 
 def get_contest_problems(session, contest_id):
-    """获取比赛中的所有问题ID和题目名称"""
+    """
+    获取比赛中的所有问题ID和题目名称。
+    """
     url = f"http://oj.daimayuan.top/contest/{contest_id}"
     response = session.get(url)
-
     if response.status_code != 200:
         return None
-    
     soup = BeautifulSoup(response.text, 'html.parser')
     problem_map = dict()
     for tr in soup.select('table tbody tr'):
@@ -73,7 +71,6 @@ def get_cache():
     cache_dir = CONFIG['general']['cache_dir']
     if not os.path.exists(cache_dir):
         os.makedirs(cache_dir)
-    
     cache_config = CONFIG['down']['cache']
     return Cache(
         cache_dir,

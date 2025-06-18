@@ -4,13 +4,15 @@ import logging
 
 from app.config import CONFIG, config
 
-
+# 获取日志记录器
 logger = logging.getLogger(__name__)
-def run(df, startid, endid, cid, name_order, submission_history, problem_map):
 
+def run(df, startid, endid, cid, name_order, submission_history, problem_map):
+    """
+    入口函数：处理数据并生成 standing.html 所需 context。
+    """
     df = prepare_data(df)
     df_sorted = sort_and_rank(df)
-    
     # 处理时间轴数据
     timeline_data = []
     for username, problems in submission_history.items():
@@ -23,22 +25,27 @@ def run(df, startid, endid, cid, name_order, submission_history, problem_map):
                     'problemId': str(problem_id),
                     'score': score
                 })
-    
     # 按提交ID排序
     timeline_data.sort(key=lambda x: x['time'])
-    
+    # 渲染表格HTML
     table_html = render_table(df_sorted, name_order, submission_history, problem_map)
+    # 构建context字典
     context = build_html(table_html, startid, endid, cid, timeline_data)
     logger.info(f"{startid},{endid},{cid},已生成 HTML context")
     return context
 
-
 def prepare_data(df):
+    """
+    预处理数据，计算总分。
+    """
     df = df.copy()
     df['总分'] = df.iloc[:, 1:-1].sum(axis=1)
     return df
 
 def sort_and_rank(df):
+    """
+    按总分降序排序并添加排名列。
+    """
     df = df.sort_values('总分', ascending=False)
     df.insert(0, '排名', range(1, len(df) + 1))
     return df
@@ -56,7 +63,9 @@ def build_html(table_html, startid, endid, cid, timeline_data):
     }
 
 def render_table(df, name_order, submission_history, problem_map):
-    """渲染表格为HTML"""
+    """
+    渲染成绩表格为HTML。
+    """
     html = []
     html.append('<table id="rank-table" class="table table-hover">')
     
