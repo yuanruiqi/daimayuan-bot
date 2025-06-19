@@ -148,7 +148,12 @@ def process_single_submission(session, submission_id, target_contest_id, cache, 
         username = username_elem.text.strip()
         score_elem = soup.select_one('td a.uoj-score')
         if not score_elem:
-            return None, 'error_score'
+            ext_elem =  soup.select_one('td a.small')
+            waiting_list = ['waiting', 'judging', 'waiting...','judging...','waiting for judge','judging test']
+            if ext_elem and ext_elem.text.strip().lower() in waiting_list:
+                return None, 'waiting'
+            else:
+                return None, 'error'
             
         score = score_elem.text.strip()
         
@@ -229,7 +234,7 @@ def run(start_id, end_id, target_contest_id, task_id, progress_callback=None, sh
                     
                 if status == 'not_found':
                     batch_not_found += 1
-                elif status == 'error' or status == 'no_match' or status == 'error_score':
+                elif status == 'error' or status == 'no_match' or status == 'waiting':
                     continue
                 else:  # status == 'ok'
                     submissions_data.append(data_tuple)

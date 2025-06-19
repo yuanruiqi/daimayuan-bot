@@ -18,7 +18,7 @@ def standing_get(submission_id, contest_id):
     problem_map = get_problem_map(contest_id)
     result, status = process_single_submission(_standing_session, submission_id, contest_id, _standing_cache, problem_map)
     
-    if status == 'error_score':# 新增：如果是Waiting或Judging状态，视为404
+    if status == 'waiting':# 新增：如果是Waiting或Judging状态，视为404
         return 404
     if status == 'not_found':
         return 404
