@@ -148,7 +148,7 @@ def process_single_submission(session, submission_id, target_contest_id, cache, 
         username = username_elem.text.strip()
         score_elem = soup.select_one('td a.uoj-score')
         if not score_elem:
-            return None, 'error'
+            return None, 'error_score'
             
         score = score_elem.text.strip()
         

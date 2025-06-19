@@ -17,21 +17,9 @@ def get_problem_map(contest_id):
 def standing_get(submission_id, contest_id):
     problem_map = get_problem_map(contest_id)
     result, status = process_single_submission(_standing_session, submission_id, contest_id, _standing_cache, problem_map)
-    # 新增：如果是Waiting或Judging状态，视为404
-    if status == 'ok' and result:
-        # result: (submission_id, username, problem_id, score)
-        # 需要重新获取原始页面内容判断状态
-        from bs4 import BeautifulSoup
-        from app.services.down import fetch_submission
-        resp = fetch_submission(_standing_session, submission_id)
-        if resp and resp.status_code == 200:
-            soup = BeautifulSoup(resp.text, 'html.parser')
-            # 结果列一般在 class="small" 的 a 标签内
-            result_a = soup.select_one('td a.small')
-            if result_a:
-                result_text = result_a.text.strip().lower()
-                if result_text in ['waiting', 'judging', 'waiting...','judging...','waiting for judge','judging test']:
-                    return 404
+    
+    if status == 'error_score':# 新增：如果是Waiting或Judging状态，视为404
+        return 404
     if status == 'not_found':
         return 404
     if status != 'ok':
