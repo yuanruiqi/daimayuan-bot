@@ -229,7 +229,7 @@ def run(start_id, end_id, target_contest_id, task_id, progress_callback=None, sh
                     
                 if status == 'not_found':
                     batch_not_found += 1
-                elif status == 'error' or status == 'no_match':
+                elif status == 'error' or status == 'no_match' or status == 'error_score':
                     continue
                 else:  # status == 'ok'
                     submissions_data.append(data_tuple)
