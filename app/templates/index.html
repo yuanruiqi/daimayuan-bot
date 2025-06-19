@@ -52,55 +52,86 @@
 </head>
 <body>
     <div class="container">
-        <h1 id="main-title">PLEASE INPUT THREE INTEGERS:</h1>
-        <form method="POST">
-            <label for="start_id" id="label-from">FROM:</label>
+        <h1 id="main-title">请输入三个整数：</h1>
+        <form method="POST" id="main-form">
+            <label for="start_id" id="label-from">起始编号：</label>
             <input type="number" name="start_id" id="start_id" required>
 
-            <label for="end_id" id="label-to">TO:</label>
+            <label for="end_id" id="label-to">结束编号：</label>
             <input type="number" name="end_id" id="end_id" required>
 
-            <label for="cid" id="label-cid">CONTEST ID:</label>
+            <label for="cid" id="label-cid">比赛ID：</label>
             <input type="number" name="cid" id="cid" required>
 
-            <input type="submit" id="submit-btn" value="SUBMIT">
+            <label style="display: flex; align-items: center; margin-top: 10px;">
+                <input type="checkbox" name="auto_task" id="auto_task" style="margin-right: 8px;">
+                <span id="label-auto-task">自动任务</span>
+            </label>
+
+            <input type="submit" id="submit-btn" value="提交">
         </form>
+        <div id="formMsg" style="text-align:center;color:#d33;margin-top:10px;"></div>
         <div style="text-align: center; margin-top: 20px;">
             <a href="/tasklist" style="color: #007BFF; text-decoration: none;" id="show-task-link">
-            Show task list
+            查看任务列表
             </a>
         </div>
-        <div style="text-align: center; margin-top: 20px;">
-            <button id="openStandingTaskModal" class="bottom-btn">Create auto standing</button>
+        <div class="lang-switch-bar">
+            <button type="button" onclick="setLang('en')" class="lang-btn" id="lang-en">English</button>
+            <button type="button" onclick="setLang('zh')" class="lang-btn" id="lang-zh">中文</button>
         </div>
-        <!-- 榜单任务创建弹窗 -->
-        <div id="standingTaskModal" class="modal" style="display:none;position:fixed;z-index:1000;left:0;top:0;width:100vw;height:100vh;background:rgba(0,0,0,0.4);align-items:center;justify-content:center;">
-            <div style="background:#fff;padding:30px 40px;border-radius:8px;min-width:320px;max-width:90vw;position:relative;">
-                <button id="closeStandingTaskModal" style="position:absolute;right:10px;top:10px;font-size:20px;background:none;border:none;">&times;</button>
-                <h2 id="modal-title" style="margin-bottom:20px;">New auto standing</h2>
-                <form id="createStandingTaskForm">
-                    <label id="label-modal-cid">contest id: <input type="number" name="contest_id" required></label><br><br>
-                    <label id="label-modal-start">start id: <input type="number" name="start_id" required></label><br><br>
-                    <label id="label-modal-end">end id: <input type="number" name="end_id" required></label><br><br>
-                    <button type="submit" class="bottom-btn" id="modal-submit-btn">Submit</button>
-                </form>
-                <div id="standingTaskMsg" style="margin-top:10px;color:#28a745;"></div>
-            </div>
-        </div>
-        <script>
-        document.getElementById('openStandingTaskModal').onclick = function() {
-            document.getElementById('standingTaskModal').style.display = 'flex';
-        };
-        document.getElementById('closeStandingTaskModal').onclick = function() {
-            document.getElementById('standingTaskModal').style.display = 'none';
-        };
-        document.getElementById('createStandingTaskForm').onsubmit = function(e) {
+    </div>
+    <script>
+    // 语言映射
+    const langMap = {
+        en: {
+            title: 'DMYBOT',
+            inputTitle: 'PLEASE INPUT THREE INTEGERS:',
+            from: 'FROM:',
+            to: 'TO:',
+            cid: 'CONTEST ID:',
+            submit: 'SUBMIT',
+            showTask: 'Show task list',
+            autoTask: 'Auto task',
+        },
+        zh: {
+            title: 'DMYBOT',
+            inputTitle: '请输入三个整数：',
+            from: '起始编号：',
+            to: '结束编号：',
+            cid: '比赛ID：',
+            submit: '提交',
+            showTask: '查看任务列表',
+            autoTask: '自动任务',
+        }
+    };
+    let currentLang = 'zh';
+    function setLang(lang) {
+        currentLang = lang;
+        document.title = langMap[lang].title;
+        document.getElementById('main-title').textContent = langMap[lang].inputTitle;
+        document.getElementById('label-from').textContent = langMap[lang].from;
+        document.getElementById('label-to').textContent = langMap[lang].to;
+        document.getElementById('label-cid').textContent = langMap[lang].cid;
+        document.getElementById('submit-btn').value = langMap[lang].submit;
+        document.getElementById('show-task-link').textContent = langMap[lang].showTask;
+        document.getElementById('label-auto-task').textContent = langMap[lang].autoTask;
+        document.getElementById('lang-en').classList.toggle('active', lang==='en');
+        document.getElementById('lang-zh').classList.toggle('active', lang==='zh');
+    }
+    setLang('zh');
+
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('js loaded');
+        document.getElementById('main-form').onsubmit = function(e) {
+            const autoTask = document.getElementById('auto_task').checked;
+            console.log('form submit, autoTask:', autoTask);
+            if (!autoTask) return true; // 非自动任务，正常提交
             e.preventDefault();
-            const form = e.target;
             const data = {
-                contest_id: Number(form.contest_id.value),
-                start_id: Number(form.start_id.value),
-                end_id: Number(form.end_id.value)
+                contest_id: Number(document.getElementById('cid').value),
+                start_id: Number(document.getElementById('start_id').value),
+                end_id: Number(document.getElementById('end_id').value)
             };
             fetch('/standing/create', {
                 method: 'POST',
@@ -112,75 +143,14 @@
                 if(res.success && res.task_id) {
                     window.location.href = `/standing/stream_view/${res.task_id}`;
                 } else {
-                    document.getElementById('standingTaskMsg').textContent = res.message || '创建失败';
+                    document.getElementById('formMsg').textContent = res.message || '创建失败';
                 }
             })
             .catch(()=>{
-                document.getElementById('standingTaskMsg').textContent = '创建失败';
+                document.getElementById('formMsg').textContent = '创建失败';
             });
         };
-
-        // 语言映射
-        const langMap = {
-            en: {
-                title: 'DMYBOT',
-                inputTitle: 'PLEASE INPUT THREE INTEGERS:',
-                from: 'FROM:',
-                to: 'TO:',
-                cid: 'CONTEST ID:',
-                submit: 'SUBMIT',
-                showTask: 'Show task list',
-                createStanding: 'Create auto standing',
-                modalTitle: 'New auto standing',
-                contestId: 'contest id:',
-                startId: 'start id:',
-                endId: 'end id:',
-                submitBtn: 'Submit'
-            },
-            zh: {
-                title: 'DMYBOT',
-                inputTitle: '请输入三个整数：',
-                from: '起始编号：',
-                to: '结束编号：',
-                cid: '比赛ID：',
-                submit: '提交',
-                showTask: '查看任务列表',
-                createStanding: '创建榜单任务',
-                modalTitle: '新建榜单任务',
-                contestId: '比赛ID：',
-                startId: '起始编号：',
-                endId: '结束编号：',
-                submitBtn: '提交'
-            }
-        };
-        let currentLang = 'en';
-        function setLang(lang) {
-            currentLang = lang;
-            document.title = langMap[lang].title;
-            document.getElementById('main-title').textContent = langMap[lang].inputTitle;
-            document.getElementById('label-from').textContent = langMap[lang].from;
-            document.getElementById('label-to').textContent = langMap[lang].to;
-            document.getElementById('label-cid').textContent = langMap[lang].cid;
-            document.getElementById('submit-btn').value = langMap[lang].submit;
-            document.getElementById('show-task-link').textContent = langMap[lang].showTask;
-            document.getElementById('openStandingTaskModal').textContent = langMap[lang].createStanding;
-            document.getElementById('modal-title').textContent = langMap[lang].modalTitle;
-            document.getElementById('label-modal-cid').innerHTML = langMap[lang].contestId + ' <input type="number" name="contest_id" required>';
-            document.getElementById('label-modal-start').innerHTML = langMap[lang].startId + ' <input type="number" name="start_id" required>';
-            document.getElementById('label-modal-end').innerHTML = langMap[lang].endId + ' <input type="number" name="end_id" required>';
-            document.getElementById('modal-submit-btn').textContent = langMap[lang].submitBtn;
-            // 语言按钮高亮
-            document.getElementById('lang-en').classList.toggle('active', lang==='en');
-            document.getElementById('lang-zh').classList.toggle('active', lang==='zh');
-        }
-        // 默认语言
-        setLang('zh');
-        </script>
-    
-        <div class="lang-switch-bar">
-            <button onclick="setLang('en')" class="lang-btn" id="lang-en">English</button>
-            <button onclick="setLang('zh')" class="lang-btn" id="lang-zh">中文</button>
-        </div>
-    </div>
+    });
+    </script>
 </body>
 </html>
