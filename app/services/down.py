@@ -149,7 +149,7 @@ def process_single_submission(session, submission_id, target_contest_id, cache, 
         score_elem = soup.select_one('td a.uoj-score')
         if not score_elem:
             ext_elem =  soup.select_one('td a.small')
-            waiting_list = ['waiting', 'judging', 'waiting...','judging...','waiting for judge','judging test']
+            waiting_list = ['waiting', 'judging', 'waiting...','judging...','waiting for judge','judging test','waiting rejudge']
             if ext_elem and ext_elem.text.strip().lower() in waiting_list:
                 return None, 'waiting'
             else:
