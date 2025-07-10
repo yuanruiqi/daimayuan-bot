@@ -179,7 +179,7 @@ def run(start_id, end_id, target_contest_id, task_id, progress_callback=None, sh
         return 'error', [],{}
     if start_id>end_id:
         logger.warning("发现 l>r")
-        return 'error',[],{}
+        return 'completed',[],{}
     # 创建会话
     session = create_session()
     # 获取比赛的所有问题ID和名称（使用缓存）
